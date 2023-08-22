@@ -50,34 +50,41 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
 
 const register = async (req: Request, res: Response) => {
   const { email, password, role, name } = req.body;
-  try {
-    const userCheck = await prisma.user.findUnique({ where: { email } });
-    console.log("userCheck", userCheck);
-
-    if (userCheck) {
-      return res.json({
-        message: "User is valid. Please SignUp to create a new one",
-      });
-    }
-
-    const hashPassword = await bcrypt.hash(password, 10);
-
-    if (!hashPassword) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    const userData = {
-      email,
-      name,
-      role,
-      password: hashPassword,
-    };
-
-    const newUser = await prisma.user.create({ data: userData });
-    return res.status(200).json(newUser);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal server error" });
+  const emailCheck = validator.isEmail(email);
+  if (!emailCheck) {
+    return res.status(422).json({
+      errors: [
+        {
+          field: "email",
+          message: "Invalid email",
+        },
+      ],
+      message: "Invalid credentials",
+    });
   }
+  const userCheck = await prisma.user.findUnique({ where: { email } });
+
+  if (userCheck) {
+    return res.json({
+      message: "User is valid. Please SignUp to create a new one",
+    });
+  }
+
+  const hashPassword = await bcrypt.hash(password, 10);
+
+  if (!hashPassword) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+  const userData = {
+    email,
+    name,
+    role,
+    password: hashPassword,
+  };
+
+  const newUser = await prisma.user.create({ data: userData });
+
+  return res.status(200).json(newUser);
 };
 
 export { login, register };
