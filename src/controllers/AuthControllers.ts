@@ -4,6 +4,7 @@ import validator from "validator";
 import { Request, Response } from "express";
 import { prisma } from "../../prisma/prisma";
 import { ResponseBody } from "../types";
+import { Prisma } from "@prisma/client";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
@@ -23,7 +24,7 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
     });
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.users.findUnique({ where: { email } });
 
   if (!user) {
     return res.status(401).json({ errors: [], message: "Invalid credentials" });
@@ -49,7 +50,7 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
 };
 
 const register = async (req: Request, res: Response) => {
-  const { email, password, role, name } = req.body;
+  const { email, password, name } = req.body;
   const emailCheck = validator.isEmail(email);
   if (!emailCheck) {
     return res.status(422).json({
@@ -62,7 +63,7 @@ const register = async (req: Request, res: Response) => {
       message: "Invalid credentials",
     });
   }
-  const userCheck = await prisma.user.findUnique({ where: { email } });
+  const userCheck = await prisma.users.findUnique({ where: { email } });
 
   if (userCheck) {
     return res.json({
@@ -78,13 +79,35 @@ const register = async (req: Request, res: Response) => {
   const userData = {
     email,
     name,
-    role,
     password: hashPassword,
   };
 
-  const newUser = await prisma.user.create({ data: userData });
+  const newUser = await prisma.users.create({ data: userData });
 
   return res.status(200).json(newUser);
 };
+const getUsers = async (req: Request, res: Response) => {
+  const { keySearch, limit, pageIndex } = req.query!;
 
-export { login, register };
+  const pagination: object = {
+    take: Number(limit) || 10,
+    skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
+  };
+
+  const listUser = await prisma.users.findMany({
+    ...pagination,
+    where: {
+      OR: [
+        {
+          email: {
+            endsWith: "post.vn",
+          },
+        },
+        { email: { endsWith: "gmail.com" } },
+      ],
+    },
+  });
+  return res.status(200).json(listUser);
+};
+
+export { login, register, getUsers };

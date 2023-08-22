@@ -1,5 +1,7 @@
-import { login, register } from "./controllers/AuthControllers";
+import { login, register, getUsers } from "./controllers/AuthControllers";
 import type { Express } from "express";
+import { authenticateToken } from "./middlewares/Authentication";
+import { isAdmin } from "./middlewares/Admin";
 
 export default function routes(app: Express) {
   // Auth routes
@@ -7,5 +9,5 @@ export default function routes(app: Express) {
   app.route("/auth/register").post(register);
 
   // Protected
-  // app.route("/admin/users").get(isAuthenticated, isAdmin, getUsers);
+  app.route("/admin/users").get(authenticateToken, isAdmin, getUsers);
 }
