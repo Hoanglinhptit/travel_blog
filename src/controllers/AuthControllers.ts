@@ -1,53 +1,62 @@
-import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { Request, RequestHandler, Response } from "express";
+import validator from "validator";
+import { Request, Response } from "express";
+import { prisma } from "../../prisma/prisma";
+import { ResponseBody } from "../types";
 
-const TOKEN_SECRET = "09f26e402586e2faa8da4c98a35f1b20d6b033c60";
-exports.TOKEN_SECRET = TOKEN_SECRET;
-const prisma = new PrismaClient();
+const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
-const login = async (req: Request, res: Response) => {
-  console.log("running this route login");
+const login = async (req: Request, res: Response<ResponseBody>) => {
+  const { email, password } = req.body;
+  const emailCheck = validator.isEmail(email);
 
-  //   const { password } = req.body;
-  //   const email = (req.body as { email: string }).email;
-  //   try {
-  //     const userCheck = await prisma.user.findUnique({ where: { email } });
+  if (!emailCheck) {
+    return res.status(422).json({
+      errors: [
+        {
+          field: "email",
+          message: "Invalid email",
+        },
+      ],
+      message: "Invalid credentials",
+    });
+  }
 
-  //     if (!userCheck) {
-  //       return res.json({ msg: "error" });
-  //     }
+  const user = await prisma.user.findUnique({ where: { email } });
 
-  //     const passwordMatch = await bcrypt.compare(password, userCheck.password);
+  if (!user) {
+    return res.status(401).json({ errors: [], message: "Invalid credentials" });
+  }
 
-  //     if (!passwordMatch) {
-  //       return res.status(401).json({ message: "Invalid credentials" });
-  //     }
+  const passwordMatch = await bcrypt.compare(password, user.password);
 
-  //     const token = jwt.sign(
-  //       { userId: userCheck.id, role: userCheck.role },
-  //       TOKEN_SECRET,
-  //       {
-  //         expiresIn: "2h",
-  //       }
-  //     );
-  //     return res
-  //       .status(200)
-  //       .json({ token, name: userCheck.name, role: userCheck.role });
-  //   } catch (error) {
-  //     console.error(error);
-  //     return res.status(500).json({ message: "Internal server error" });
-  //   }
+  if (!passwordMatch) {
+    return res.status(401).json({ errors: [], message: "Invalid credentials" });
+  }
+
+  const token = jwt.sign(
+    { sub: user.id, id: user.id, role: user.role },
+    TOKEN_SECRET,
+    {
+      expiresIn: "3h",
+    },
+  );
+
+  return res
+    .status(200)
+    .json({ data: { token, name: user.name, role: user.role } });
 };
+
 const register = async (req: Request, res: Response) => {
   const { email, password, role, name } = req.body;
   try {
     const userCheck = await prisma.user.findUnique({ where: { email } });
+    console.log("userCheck", userCheck);
 
-    if (!userCheck) {
+    if (userCheck) {
       return res.json({
-        msg: "User is valid. Please SignUp to create a new one",
+        message: "User is valid. Please SignUp to create a new one",
       });
     }
 
@@ -62,6 +71,7 @@ const register = async (req: Request, res: Response) => {
       role,
       password: hashPassword,
     };
+
     const newUser = await prisma.user.create({ data: userData });
     return res.status(200).json(newUser);
   } catch (error) {
@@ -70,4 +80,4 @@ const register = async (req: Request, res: Response) => {
   }
 };
 
-export { login };
+export { login, register };
