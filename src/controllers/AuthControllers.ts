@@ -4,7 +4,6 @@ import validator from "validator";
 import { Request, Response } from "express";
 import { prisma } from "../../prisma/prisma";
 import { ResponseBody } from "../types";
-import { Prisma } from "@prisma/client";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
@@ -87,8 +86,13 @@ const register = async (req: Request, res: Response) => {
   return res.status(200).json(newUser);
 };
 const getUsers = async (req: Request, res: Response) => {
-  const { keySearch, limit, pageIndex } = req.query!;
+  const { keySearch, limit, pageIndex } = req.query as {
+    keySearch?: string;
+    limit?: string;
+    pageIndex?: string;
+  };
 
+  const search: string = keySearch || "";
   const pagination: object = {
     take: Number(limit) || 10,
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
@@ -97,13 +101,16 @@ const getUsers = async (req: Request, res: Response) => {
   const listUser = await prisma.users.findMany({
     ...pagination,
     where: {
+      name: {
+        contains: search,
+      },
       OR: [
         {
           email: {
-            endsWith: "post.vn",
+            endsWith: "@post.vn",
           },
         },
-        { email: { endsWith: "gmail.com" } },
+        { email: { endsWith: "@gmail.com" } },
       ],
     },
   });
