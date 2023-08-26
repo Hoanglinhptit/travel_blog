@@ -6,7 +6,7 @@ import "dotenv/config";
 import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { BadRouteError } from "./middlewares/BadRouteHandler";
-import { DatabaseError } from "./middlewares/DatabaseError";
+// import { DatabaseError } from "./middlewares/DatabaseError";
 if (!process.env.TOKEN_SECRET) {
   throw new Error("TOKEN_SECRET must be set in .env file");
 }
@@ -27,11 +27,6 @@ routes(app);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
-  const databaseError: boolean = req.body.databaseError;
-  if (databaseError) {
-    throw new DatabaseError();
-  }
-  res.status(200).send("Success");
 });
 
 app.all("/*", () => {
