@@ -29,9 +29,9 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 
-app.all("/*", () => {
-  throw new BadRouteError();
-});
+// app.all("/*", () => {
+//   throw new BadRouteError();
+// });
 
 app.use(errorHandeler);
 
