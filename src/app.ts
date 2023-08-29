@@ -1,20 +1,14 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import http from "http";
-// import { createClient } from "@libsql/client";
 import "dotenv/config";
 import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
-import { BadRouteError } from "./middlewares/BadRouteHandler";
-import { DatabaseError } from "./middlewares/DatabaseError";
+// import { BadRouteError } from "./middlewares/BadRouteHandler";
+// import { DatabaseError } from "./middlewares/DatabaseError";
 if (!process.env.TOKEN_SECRET) {
   throw new Error("TOKEN_SECRET must be set in .env file");
 }
-
-// const client = createClient({
-//   url: "libsql://your-database.turso.io",
-//   authToken: "your-auth-token",
-// });
 
 const app = express();
 const port = 3000;
@@ -27,16 +21,11 @@ routes(app);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
-  const databaseError: boolean = req.body.databaseError;
-  if (databaseError) {
-    throw new DatabaseError();
-  }
-  res.status(200).send("Success");
 });
 
-app.all("/*", () => {
-  throw new BadRouteError();
-});
+// app.all("/*", () => {
+//   throw new BadRouteError();
+// });
 
 app.use(errorHandeler);
 
