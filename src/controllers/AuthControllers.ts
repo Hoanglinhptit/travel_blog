@@ -35,7 +35,7 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
     return res.status(401).json({ errors: [], message: "Invalid credentials" });
   }
 
-  const token = jwt.sign(
+  const access_token = jwt.sign(
     { sub: user.id, id: user.id, role: user.role },
     TOKEN_SECRET,
     {
@@ -45,7 +45,7 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
 
   return res
     .status(200)
-    .json({ data: { token, name: user.name, role: user.role } });
+    .json({ data: { access_token, name: user.name, role: user.role } });
 };
 
 const register = async (req: Request, res: Response) => {
