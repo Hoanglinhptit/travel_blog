@@ -1,4 +1,11 @@
 import { login, register, getUsers } from "./controllers/AuthControllers";
+import {
+  createPost,
+  createPostAdmin,
+  getPostByID,
+  getPosts,
+  getPendingPosts,
+} from "./controllers/PostControllers";
 import type { Express } from "express";
 import { authenticateToken } from "./middlewares/Authentication";
 import { isAdmin } from "./middlewares/Admin";
@@ -10,4 +17,12 @@ export default function routes(app: Express) {
 
   // Protected
   app.route("/admin/users").get(authenticateToken, isAdmin, getUsers);
+
+  // Post route
+  app.route("/api/posts").get(getPosts).post(authenticateToken, createPost);
+  app.route("/api/posts/:id").get(getPostByID);
+  app
+    .route("/api/admin/posts")
+    .get(authenticateToken, isAdmin, getPendingPosts)
+    .post(authenticateToken, isAdmin, createPostAdmin);
 }

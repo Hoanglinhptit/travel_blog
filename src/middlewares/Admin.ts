@@ -1,7 +1,11 @@
-import { NextFunction, Request, Response } from "express";
-
-export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const user = req.body;
+import { NextFunction, Response } from "express";
+import { TokenRequest } from "./Authentication";
+export const isAdmin: any = (
+  req: TokenRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  const user = req.user;
   if (user && user.role === "admin") {
     next(); // User has admin role, proceed to the next middleware/route handler
   } else {

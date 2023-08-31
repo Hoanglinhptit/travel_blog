@@ -28,6 +28,7 @@ model Post {
   categories Category[]
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
+  status     status     @default(pending)
 
   @@index([authorId])
 }
@@ -44,4 +45,10 @@ model Tags {
   id    Int    @id @default(autoincrement())
   name  String @unique
   posts Post[]
+}
+
+enum status {
+  pending
+  approved
+  rejected
 }

@@ -43,9 +43,9 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
     },
   );
 
-  return res
-    .status(200)
-    .json({ data: { access_token, name: user.name, role: user.role } });
+  return res.status(200).json({
+    data: { access_token, name: user.name, role: user.role, id: user.id },
+  });
 };
 
 const register = async (req: Request, res: Response) => {

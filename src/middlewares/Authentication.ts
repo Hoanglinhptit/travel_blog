@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-
-export const authenticateToken = (
-  req: Request,
+// import { RequestAuth } from "src/types";
+import { User } from "src/types";
+export interface TokenRequest extends Request {
+  user: User;
+}
+export const authenticateToken: any = (
+  req: TokenRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -18,7 +22,7 @@ export const authenticateToken = (
     (err: any, user: any) => {
       if (err) return res.sendStatus(403);
 
-      req.body = user;
+      req.user = user;
 
       next();
     },
