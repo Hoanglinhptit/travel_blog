@@ -123,39 +123,69 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
 
-  const posts = await prisma.post.findMany({
-    ...pagination,
-    where: {
-      OR: [
-        {
-          title: {
-            contains: search,
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      ...pagination,
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
           },
-        },
-        {
-          content: {
-            contains: search,
+          {
+            content: {
+              contains: search,
+            },
           },
-        },
-      ],
-      status: "approved",
-      ...tagSearchQuery,
-      ...categorySearchQuery,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          role: true,
-          email: true,
-        },
+        ],
+        status: "approved",
+        ...tagSearchQuery,
+        ...categorySearchQuery,
       },
-      tags: true,
-      categories: true,
-    },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            email: true,
+          },
+        },
+        tags: true,
+        categories: true,
+      },
+    }),
+    prisma.post.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
+          },
+          {
+            content: {
+              contains: search,
+            },
+          },
+        ],
+        status: "approved",
+        ...tagSearchQuery,
+        ...categorySearchQuery,
+      },
+    }),
+  ]);
+
+  const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+
+  return res.status(200).json({
+    posts,
+    pageIndex: Number(pageIndex) || 1,
+    totalPage,
+    limit: Number(limit) || 10,
+    keySearch,
   });
-  return res.status(200).json(posts);
 };
 // api get list posts needed to approved and having pending status
 const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
@@ -198,38 +228,68 @@ const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
 
-  const posts = await prisma.post.findMany({
-    ...pagination,
-    where: {
-      OR: [
-        {
-          title: {
-            contains: search,
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      ...pagination,
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
           },
-        },
-        {
-          content: {
-            contains: search,
+          {
+            content: {
+              contains: search,
+            },
           },
-        },
-      ],
-      status: "pending",
-      ...tagSearchQuery,
-      ...categorySearchQuery,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          role: true,
-          email: true,
-        },
+        ],
+        status: "pending",
+        ...tagSearchQuery,
+        ...categorySearchQuery,
       },
-      tags: true,
-      categories: true,
-    },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            email: true,
+          },
+        },
+        tags: true,
+        categories: true,
+      },
+    }),
+    prisma.post.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
+          },
+          {
+            content: {
+              contains: search,
+            },
+          },
+        ],
+        status: "approved",
+        ...tagSearchQuery,
+        ...categorySearchQuery,
+      },
+    }),
+  ]);
+
+  const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+
+  return res.status(200).json({
+    posts,
+    pageIndex: Number(pageIndex) || 1,
+    totalPage,
+    limit: Number(limit) || 10,
+    keySearch,
   });
-  return res.status(200).json(posts);
 };
 export { createPost, createPostAdmin, getPostByID, getPosts, getPendingPosts };
