@@ -6,10 +6,8 @@ import { Response } from "express";
 import validator from "validator";
 //  user create post
 const createPost: any = async (req: TokenRequest, res: Response) => {
-  const { authorId, title, content, tagNames } = req.body;
-  console.log("req.body", req.body);
-  console.log("req.user", req.user);
-
+  const { title, content, tagNames, categories } = req.body;
+  const authorId = req.user.id;
   //   const tagNames = req.body.tagNames as Array<string>;
   const createdPost = await prisma.post.create({
     data: {
@@ -22,6 +20,15 @@ const createPost: any = async (req: TokenRequest, res: Response) => {
           create: { name: e },
         })),
       },
+      categories: {
+        connect: categories.map((e: number) => ({
+          id: e,
+        })),
+      },
+    },
+    include: {
+      tags: true,
+      categories: true,
     },
   });
   return res.status(200).json({
@@ -30,7 +37,7 @@ const createPost: any = async (req: TokenRequest, res: Response) => {
 };
 /// just admin route can access
 const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
-  const { title, content, tagNames } = req.body;
+  const { title, content, tagNames, categories } = req.body;
 
   const createdPost = await prisma.post.create({
     data: {
@@ -42,6 +49,11 @@ const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
         connectOrCreate: tagNames.map((e: string) => ({
           where: { name: e },
           create: { name: e },
+        })),
+      },
+      categories: {
+        connect: categories.map((e: number) => ({
+          id: e,
         })),
       },
     },
