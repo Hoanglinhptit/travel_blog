@@ -50,6 +50,19 @@ const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
     data: createdPost,
   });
 };
+// update status of post - admin
+const updatePostStatus: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const updatedPost = await prisma.post.update({
+    where: { id: Number(id) },
+    data: { status },
+  });
+
+  return res.status(200).json({ data: updatedPost });
+};
+
 const getPostByID: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
   const idCheck = validator.isInt(id);
@@ -292,4 +305,75 @@ const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
-export { createPost, createPostAdmin, getPostByID, getPosts, getPendingPosts };
+const updatePost: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+  const { title, content, tags, categories } = req.body;
+  // Determine the role of the requester (user or admin)
+  const { role } = req.user;
+
+  const dataToUpdate = {
+    title,
+    content,
+    status: role === "admin" ? "approved" : "pending",
+    tags,
+    categories,
+  };
+
+  if (tags) {
+    dataToUpdate.tags = {
+      upsert: tags.map((tag: string) => ({
+        where: { name: tag },
+        update: {},
+        create: { name: tag },
+      })),
+    };
+  }
+
+  if (categories) {
+    dataToUpdate.categories = {
+      upsert: categories.map((category: string) => ({
+        where: { name: category },
+        update: {},
+        create: { name: category },
+      })),
+    };
+  }
+
+  const updatedPost = await prisma.post.update({
+    where: { id: Number(id) },
+    data: {
+      title: title,
+      content: content,
+      status: role === "admin" ? "approved" : "pending",
+      tags: tags,
+      categories: categories,
+    },
+    include: {
+      tags: true,
+      categories: true,
+    },
+  });
+
+  return res.status(200).json(updatedPost);
+};
+
+// admin and user can delete
+const deletePost: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+
+  await prisma.post.delete({
+    where: { id: Number(id) },
+  });
+
+  res.status(204).send(); // 204 No Content
+};
+export {
+  createPost,
+  createPostAdmin,
+  getPostByID,
+  getPosts,
+  getPendingPosts,
+  updatePostStatus,
+  deletePost,
+  updatePost,
+};

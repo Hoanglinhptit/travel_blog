@@ -5,6 +5,9 @@ import {
   getPostByID,
   getPosts,
   getPendingPosts,
+  updatePostStatus,
+  updatePost,
+  deletePost,
 } from "./controllers/PostControllers";
 import type { Express } from "express";
 import { authenticateToken } from "./middlewares/Authentication";
@@ -20,7 +23,12 @@ export default function routes(app: Express) {
 
   // Post route
   app.route("/api/posts").get(getPosts).post(authenticateToken, createPost);
-  app.route("/api/posts/:id").get(getPostByID);
+  app
+    .route("/api/posts/:id")
+    .get(getPostByID)
+    .patch(authenticateToken, isAdmin, updatePostStatus)
+    .put(authenticateToken, updatePost)
+    .delete(authenticateToken, deletePost);
   app
     .route("/api/admin/posts")
     .get(authenticateToken, isAdmin, getPendingPosts)
