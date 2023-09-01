@@ -288,7 +288,7 @@ const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
             },
           },
         ],
-        status: "approved",
+        status: "pending",
         ...tagSearchQuery,
         ...categorySearchQuery,
       },
@@ -312,9 +312,6 @@ const updatePost: any = async (req: TokenRequest, res: Response) => {
   const { role } = req.user;
 
   const dataToUpdate = {
-    title,
-    content,
-    status: role === "admin" ? "approved" : "pending",
     tags,
     categories,
   };
@@ -345,8 +342,8 @@ const updatePost: any = async (req: TokenRequest, res: Response) => {
       title: title,
       content: content,
       status: role === "admin" ? "approved" : "pending",
-      tags: tags,
-      categories: categories,
+      tags: dataToUpdate.tags,
+      categories: dataToUpdate.categories,
     },
     include: {
       tags: true,
@@ -365,7 +362,7 @@ const deletePost: any = async (req: TokenRequest, res: Response) => {
     where: { id: Number(id) },
   });
 
-  res.status(204).send(); // 204 No Content
+  res.status(204).send();
 };
 export {
   createPost,

@@ -1,3 +1,6 @@
+import type { Express } from "express";
+import { authenticateToken } from "./middlewares/Authentication";
+import { isAdmin } from "./middlewares/Admin";
 import { login, register, getUsers } from "./controllers/AuthControllers";
 import {
   createPost,
@@ -9,9 +12,10 @@ import {
   updatePost,
   deletePost,
 } from "./controllers/PostControllers";
-import type { Express } from "express";
-import { authenticateToken } from "./middlewares/Authentication";
-import { isAdmin } from "./middlewares/Admin";
+import {
+  getCategories,
+  getCategoryPosts,
+} from "./controllers/CategoriesControllers";
 
 export default function routes(app: Express) {
   // Auth routes
@@ -22,7 +26,10 @@ export default function routes(app: Express) {
   app.route("/admin/users").get(authenticateToken, isAdmin, getUsers);
 
   // Post route
-  app.route("/api/posts").get(getPosts).post(authenticateToken, createPost);
+  app
+    .route("/api/posts")
+    .get(getPosts) // get list post include clone user
+    .post(authenticateToken, createPost); /// create post user , admin
   app
     .route("/api/posts/:id")
     .get(getPostByID)
@@ -33,4 +40,8 @@ export default function routes(app: Express) {
     .route("/api/admin/posts")
     .get(authenticateToken, isAdmin, getPendingPosts)
     .post(authenticateToken, isAdmin, createPostAdmin);
+
+  // Categories route
+  app.route("/api/categories").get(getCategories);
+  app.route("/api/categories/:id/posts").get(getCategoryPosts);
 }
