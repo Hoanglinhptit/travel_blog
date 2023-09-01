@@ -11,11 +11,10 @@ if (!process.env.TOKEN_SECRET) {
 }
 
 const app = express();
-const port = 3000;
-const server = http.createServer(app);
-
 app.use(express.json());
 app.use(cors());
+const port = 3000;
+const server = http.createServer(app);
 
 routes(app);
 

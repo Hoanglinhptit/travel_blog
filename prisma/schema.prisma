@@ -14,4 +14,41 @@ model Users {
   name     String
   password String
   role     String? @default("user")
+  posts    Post[]
+}
+
+model Post {
+  id         Int        @id @default(autoincrement())
+  posted_at  DateTime   @default(now())
+  title      String
+  content    String
+  tags       Tags[]
+  author     Users      @relation(fields: [authorId], references: [id])
+  authorId   Int
+  categories Category[]
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  status     status     @default(pending)
+
+  @@index([authorId])
+}
+
+model Category {
+  id         Int      @id @default(autoincrement())
+  name       String
+  posts      Post[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Tags {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  posts Post[]
+}
+
+enum status {
+  pending
+  approved
+  rejected
 }

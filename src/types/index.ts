@@ -11,3 +11,10 @@ export type ResponseBody =
       errors: Array<ValidationError>;
       message: string;
     };
+
+export interface User {
+  access_token: string;
+  name: string;
+  role: string;
+  id: number;
+}
