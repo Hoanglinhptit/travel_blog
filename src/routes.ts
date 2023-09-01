@@ -15,6 +15,7 @@ import {
 import {
   getCategories,
   getCategoryPosts,
+  createCategories,
 } from "./controllers/CategoriesControllers";
 
 export default function routes(app: Express) {
@@ -42,6 +43,9 @@ export default function routes(app: Express) {
     .post(authenticateToken, isAdmin, createPostAdmin);
 
   // Categories route
-  app.route("/api/categories").get(getCategories);
+  app
+    .route("/api/categories")
+    .get(getCategories)
+    .post(authenticateToken, isAdmin, createCategories);
   app.route("/api/categories/:id/posts").get(getCategoryPosts);
 }

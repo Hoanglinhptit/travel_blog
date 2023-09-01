@@ -1,8 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../../prisma/prisma";
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
-import validator from "validator";
-
+// import validator from "validator";
+const createCategories: any = async (req: TokenRequest, res: Response) => {
+  const { name } = req.body;
+  const createdCategory = await prisma.category.create({
+    data: {
+      name: name,
+    },
+  });
+  return res.status(200).json(createdCategory);
+};
 const getCategories: any = async (req: TokenRequest, res: Response) => {
   const { keySearch, limit, pageIndex } = req.query as {
     keySearch?: string;
@@ -29,6 +38,8 @@ const getCategories: any = async (req: TokenRequest, res: Response) => {
         posts: {
           select: {
             id: true,
+            // status: "approved",
+            status: true,
           },
         },
       },
@@ -65,9 +76,9 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch?: string;
   };
 
-  if (validator.isInt(id)) {
-    return res.status(400).json({ message: "Invalid category ID." });
-  }
+  //   if (validator.isInt(id)) {
+  //     return res.status(400).json({ message: "Invalid category ID." });
+  //   }
   const search: string = keySearch || "";
 
   const pagination: object = {
@@ -96,6 +107,7 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
             },
           },
         ],
+        status: "approved",
         categories: {
           some: {
             id: Number(id),
@@ -117,4 +129,4 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
-export { getCategories, getCategoryPosts };
+export { getCategories, getCategoryPosts, createCategories };
