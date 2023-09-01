@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node-dev src/app.ts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build": "tsc",
+    "start:prod": "tsc && node dist/src/app.js"
   },
   "lint-staged": {
     "**/*.ts": "prettier --write --ignore-unknown"
