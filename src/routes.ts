@@ -7,10 +7,11 @@ import {
   createPostAdmin,
   getPostByID,
   getPosts,
-  getPendingPosts,
+  // getPendingPosts,
   updatePostStatus,
   updatePost,
   deletePost,
+  getPostsAdmin,
 } from "./controllers/PostControllers";
 import {
   getCategories,
@@ -31,6 +32,7 @@ export default function routes(app: Express) {
     .route("/api/posts")
     .get(getPosts) // get list post include clone user
     .post(authenticateToken, createPost); /// create post user , admin
+  // .get(authenticateToken, isAdmin, getPostsAdmin);
   app
     .route("/api/posts/:id")
     .get(getPostByID)
@@ -39,7 +41,7 @@ export default function routes(app: Express) {
     .delete(authenticateToken, deletePost);
   app
     .route("/api/admin/posts")
-    .get(authenticateToken, isAdmin, getPendingPosts)
+    .get(authenticateToken, isAdmin, getPostsAdmin)
     .post(authenticateToken, isAdmin, createPostAdmin);
 
   // Categories route

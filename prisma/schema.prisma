@@ -29,6 +29,7 @@ model Post {
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
   status     status     @default(pending)
+  views      Int        @default(1)
 
   @@index([authorId])
 }

@@ -104,8 +104,23 @@ const getPostByID: any = async (req: TokenRequest, res: Response) => {
       categories: true,
     },
   });
+  if (!post) {
+    return res.status(404).json({
+      message: "Post not found",
+    });
+  }
+
+  // Increment the view count
+  const updatedPost = await prisma.post.update({
+    where: { id: parseInt(id) },
+    data: {
+      views: {
+        increment: 1,
+      },
+    },
+  });
   return res.status(200).json({
-    data: post,
+    data: updatedPost,
   });
 };
 /// those posts have been approved
@@ -317,6 +332,108 @@ const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
+// Admin crud :
+const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
+  const { keySearch, limit, pageIndex, tagSearch, categorySearch } =
+    req.query as {
+      keySearch?: string;
+      limit?: string;
+      pageIndex?: string;
+      tagSearch?: string;
+      categorySearch?: string;
+    };
+
+  const search: string = keySearch || "";
+  const tagSearchQuery = tagSearch
+    ? {
+        tags: {
+          some: {
+            name: {
+              contains: tagSearch,
+            },
+          },
+        },
+      }
+    : {};
+
+  const categorySearchQuery = categorySearch
+    ? {
+        categories: {
+          some: {
+            name: {
+              contains: categorySearch,
+            },
+          },
+        },
+      }
+    : {};
+  const pagination: object = {
+    take: Number(limit) || 10,
+    skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
+  };
+
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      ...pagination,
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
+          },
+          {
+            content: {
+              contains: search,
+            },
+          },
+        ],
+        ...tagSearchQuery,
+        ...categorySearchQuery,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            email: true,
+          },
+        },
+        tags: true,
+        categories: true,
+      },
+    }),
+    prisma.post.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: search,
+            },
+          },
+          {
+            content: {
+              contains: search,
+            },
+          },
+        ],
+        ...tagSearchQuery,
+        ...categorySearchQuery,
+      },
+    }),
+  ]);
+
+  const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+
+  return res.status(200).json({
+    posts,
+    pageIndex: Number(pageIndex) || 1,
+    totalPage,
+    limit: Number(limit) || 10,
+    keySearch,
+  });
+};
 const updatePost: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
   const { title, content, tags, categories } = req.body;
@@ -385,4 +502,5 @@ export {
   updatePostStatus,
   deletePost,
   updatePost,
+  getPostsAdmin,
 };
