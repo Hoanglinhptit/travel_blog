@@ -15,7 +15,6 @@ app.use(express.json());
 app.use(cors());
 const port = 3000;
 const server = http.createServer(app);
-
 routes(app);
 
 app.get("/", (req: Request, res: Response) => {
