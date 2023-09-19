@@ -339,34 +339,33 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
       keySearch?: string;
       limit?: string;
       pageIndex?: string;
-      tagSearch?: string;
-      categorySearch?: string;
+      tagSearch?: Array<string>;
+      categorySearch?: string[];
     };
 
   const search: string = keySearch || "";
-  const tagSearchQuery = tagSearch
-    ? {
-        tags: {
-          some: {
-            name: {
-              contains: tagSearch,
+  const tagSearchArray = (tagSearch || []).filter(Boolean);
+  const categorySearchArray = (categorySearch || []).filter(Boolean);
+  const tagSearchQuery =
+    tagSearchArray.length > 0
+      ? {
+          tags: {
+            some: {
+              name: {
+                in: tagSearchArray,
+              },
             },
           },
-        },
-      }
-    : {};
+        }
+      : {};
 
-  const categorySearchQuery = categorySearch
-    ? {
-        categories: {
-          some: {
-            name: {
-              contains: categorySearch,
-            },
-          },
-        },
-      }
-    : {};
+  const categorySearchQuery =
+    categorySearchArray.length > 0
+      ? {
+          categories: {},
+        }
+      : {};
+
   const pagination: object = {
     take: Number(limit) || 10,
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
@@ -388,6 +387,7 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
             },
           },
         ],
+
         ...tagSearchQuery,
         ...categorySearchQuery,
       },
@@ -432,14 +432,15 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
     totalPage,
     limit: Number(limit) || 10,
     keySearch,
+    totalCount,
   });
 };
 const updatePost: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
-  const { title, content, tags, categories } = req.body;
+  const { title, content, tags, categories, authorId } = req.body;
   // Determine the role of the requester (user or admin)
   const { role } = req.user;
-
+  const userId = req.user.id;
   const dataToUpdate = {
     tags,
     categories,
@@ -473,6 +474,7 @@ const updatePost: any = async (req: TokenRequest, res: Response) => {
       status: role === "admin" ? "approved" : "pending",
       tags: dataToUpdate.tags,
       categories: dataToUpdate.categories,
+      authorId: role === "admin" ? authorId : userId,
     },
     include: {
       tags: true,
