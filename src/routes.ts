@@ -18,7 +18,11 @@ import {
   getCategoryPosts,
   createCategories,
 } from "./controllers/CategoriesControllers";
-
+import {
+  getTags,
+  getTagsPosts,
+  createTags,
+} from "./controllers/TagControllers";
 export default function routes(app: Express) {
   // Auth routes
   app.route("/auth/login").post(login);
@@ -44,10 +48,17 @@ export default function routes(app: Express) {
     .get(authenticateToken, isAdmin, getPostsAdmin)
     .post(authenticateToken, isAdmin, createPostAdmin);
 
-  // Categories route
+  // Categories routes
   app
     .route("/api/categories")
     .get(getCategories)
     .post(authenticateToken, isAdmin, createCategories);
   app.route("/api/categories/:id/posts").get(getCategoryPosts);
+
+  // Tags API routes
+  app
+    .route("/api/tags")
+    .get(getTags)
+    .post(authenticateToken, isAdmin, createTags);
+  app.route("/api/tags/:id/posts").get(getTagsPosts);
 }

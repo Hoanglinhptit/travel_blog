@@ -37,13 +37,19 @@ const createPost: any = async (req: TokenRequest, res: Response) => {
 };
 /// just admin route can access
 const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
-  const { title, content, tagNames, categories } = req.body;
+  const { title, content, tagNames, categories, authorID } = req.body as {
+    title: string;
+    content: string;
+    tagNames: string[];
+    categories: any;
+    authorID?: string;
+  };
 
   const createdPost = await prisma.post.create({
     data: {
       title,
       content,
-      author: { connect: { id: req.user.id } },
+      author: { connect: { id: authorID ? Number(authorID) : req.user.id } },
       status: "approved",
       tags: {
         connectOrCreate: tagNames.map((e: string) => ({
