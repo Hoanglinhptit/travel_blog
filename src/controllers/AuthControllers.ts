@@ -39,7 +39,7 @@ const login = async (req: Request, res: Response<ResponseBody>) => {
     { sub: user.id, id: user.id, role: user.role },
     TOKEN_SECRET,
     {
-      expiresIn: "3h",
+      expiresIn: "24h",
     },
   );
 

@@ -12,6 +12,22 @@ const createTags: any = async (req: TokenRequest, res: Response) => {
   });
   return res.status(200).json(createdCategory);
 };
+const updateTags: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+  const { name } = req.body as {
+    name: string;
+  };
+  // Determine the role of the requester (user or admin)
+
+  const updatedTags = await prisma.tags.update({
+    where: { id: Number(id) },
+    data: {
+      name: name,
+    },
+  });
+
+  return res.status(200).json(updatedTags);
+};
 const getTags: any = async (req: TokenRequest, res: Response) => {
   const { keySearch, limit, pageIndex } = req.query as {
     keySearch?: string;
@@ -129,4 +145,13 @@ const getTagsPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
-export { getTags, getTagsPosts, createTags };
+const deleteTag: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+
+  await prisma.tags.delete({
+    where: { id: Number(id) },
+  });
+
+  res.status(204).send();
+};
+export { getTags, getTagsPosts, createTags, deleteTag };

@@ -129,4 +129,13 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
-export { getCategories, getCategoryPosts, createCategories };
+const deleteCategory: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+
+  await prisma.category.delete({
+    where: { id: Number(id) },
+  });
+
+  res.status(204).send();
+};
+export { getCategories, getCategoryPosts, createCategories, deleteCategory };

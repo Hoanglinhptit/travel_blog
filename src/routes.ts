@@ -23,6 +23,8 @@ import {
   getTagsPosts,
   createTags,
 } from "./controllers/TagControllers";
+
+import { uploadFile } from "./controllers/FilesControllers";
 export default function routes(app: Express) {
   // Auth routes
   app.route("/auth/login").post(login);
@@ -61,4 +63,7 @@ export default function routes(app: Express) {
     .get(getTags)
     .post(authenticateToken, isAdmin, createTags);
   app.route("/api/tags/:id/posts").get(getTagsPosts);
+
+  // file route
+  app.route("/api/file/upload").post(authenticateToken, uploadFile);
 }

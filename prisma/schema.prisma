@@ -18,10 +18,10 @@ model Users {
 }
 
 model Post {
-  id         Int        @id @default(autoincrement())
+  id         Int        @id @unique @default(autoincrement())
   posted_at  DateTime   @default(now())
   title      String
-  content    String
+  content    String     @db.LongText
   tags       Tags[]
   author     Users      @relation(fields: [authorId], references: [id])
   authorId   Int
@@ -43,9 +43,11 @@ model Category {
 }
 
 model Tags {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  posts Post[]
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  posts      Post[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 enum status {

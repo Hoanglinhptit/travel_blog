@@ -4,6 +4,8 @@ import { prisma } from "../../prisma/prisma";
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 import validator from "validator";
+const date = new Date();
+
 //  user create post
 const createPost: any = async (req: TokenRequest, res: Response) => {
   const { title, content, tagNames, categories } = req.body;
@@ -37,10 +39,10 @@ const createPost: any = async (req: TokenRequest, res: Response) => {
 };
 /// just admin route can access
 const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
-  const { title, content, tagNames, categories, authorID } = req.body as {
+  const { title, content, tags, categories, authorID } = req.body as {
     title: string;
     content: string;
-    tagNames: string[];
+    tags: string[];
     categories: any;
     authorID?: string;
   };
@@ -52,7 +54,7 @@ const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
       author: { connect: { id: authorID ? Number(authorID) : req.user.id } },
       status: "approved",
       tags: {
-        connectOrCreate: tagNames.map((e: string) => ({
+        connectOrCreate: tags.map((e: string) => ({
           where: { name: e },
           create: { name: e },
         })),
@@ -406,7 +408,11 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
             email: true,
           },
         },
-        tags: true,
+        tags: {
+          select: {
+            name: true,
+          },
+        },
         categories: true,
       },
     }),
@@ -443,8 +449,15 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
 };
 const updatePost: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
-  const { title, content, tags, categories, authorId } = req.body;
+  const { title, content, tags, categories, authorId } = req.body as {
+    title: string;
+    content: string;
+    tags: any;
+    categories: any;
+    authorId?: number;
+  };
   // Determine the role of the requester (user or admin)
+
   const { role } = req.user;
   const userId = req.user.id;
   const dataToUpdate = {
@@ -481,6 +494,7 @@ const updatePost: any = async (req: TokenRequest, res: Response) => {
       tags: dataToUpdate.tags,
       categories: dataToUpdate.categories,
       authorId: role === "admin" ? authorId : userId,
+      updated_at: date.toISOString(),
     },
     include: {
       tags: true,
