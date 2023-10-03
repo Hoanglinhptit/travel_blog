@@ -4,6 +4,8 @@ import { prisma } from "../../prisma/prisma";
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 import validator from "validator";
+const date = new Date();
+
 //  user create post
 const createPost: any = async (req: TokenRequest, res: Response) => {
   const { title, content, tagNames, categories } = req.body;
@@ -37,16 +39,22 @@ const createPost: any = async (req: TokenRequest, res: Response) => {
 };
 /// just admin route can access
 const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
-  const { title, content, tagNames, categories } = req.body;
+  const { title, content, tags, categories, authorID } = req.body as {
+    title: string;
+    content: string;
+    tags: string[];
+    categories: any;
+    authorID?: string;
+  };
 
   const createdPost = await prisma.post.create({
     data: {
       title,
       content,
-      author: { connect: { id: req.user.id } },
+      author: { connect: { id: authorID ? Number(authorID) : req.user.id } },
       status: "approved",
       tags: {
-        connectOrCreate: tagNames.map((e: string) => ({
+        connectOrCreate: tags.map((e: string) => ({
           where: { name: e },
           create: { name: e },
         })),
@@ -339,34 +347,33 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
       keySearch?: string;
       limit?: string;
       pageIndex?: string;
-      tagSearch?: string;
-      categorySearch?: string;
+      tagSearch?: Array<string>;
+      categorySearch?: string[];
     };
 
   const search: string = keySearch || "";
-  const tagSearchQuery = tagSearch
-    ? {
-        tags: {
-          some: {
-            name: {
-              contains: tagSearch,
+  const tagSearchArray = (tagSearch || []).filter(Boolean);
+  const categorySearchArray = (categorySearch || []).filter(Boolean);
+  const tagSearchQuery =
+    tagSearchArray.length > 0
+      ? {
+          tags: {
+            some: {
+              name: {
+                in: tagSearchArray,
+              },
             },
           },
-        },
-      }
-    : {};
+        }
+      : {};
 
-  const categorySearchQuery = categorySearch
-    ? {
-        categories: {
-          some: {
-            name: {
-              contains: categorySearch,
-            },
-          },
-        },
-      }
-    : {};
+  const categorySearchQuery =
+    categorySearchArray.length > 0
+      ? {
+          categories: {},
+        }
+      : {};
+
   const pagination: object = {
     take: Number(limit) || 10,
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
@@ -388,6 +395,7 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
             },
           },
         ],
+
         ...tagSearchQuery,
         ...categorySearchQuery,
       },
@@ -400,7 +408,11 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
             email: true,
           },
         },
-        tags: true,
+        tags: {
+          select: {
+            name: true,
+          },
+        },
         categories: true,
       },
     }),
@@ -432,14 +444,22 @@ const getPostsAdmin: any = async (req: TokenRequest, res: Response) => {
     totalPage,
     limit: Number(limit) || 10,
     keySearch,
+    totalCount,
   });
 };
 const updatePost: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
-  const { title, content, tags, categories } = req.body;
+  const { title, content, tags, categories, authorId } = req.body as {
+    title: string;
+    content: string;
+    tags: any;
+    categories: any;
+    authorId?: number;
+  };
   // Determine the role of the requester (user or admin)
-  const { role } = req.user;
 
+  const { role } = req.user;
+  const userId = req.user.id;
   const dataToUpdate = {
     tags,
     categories,
@@ -473,6 +493,8 @@ const updatePost: any = async (req: TokenRequest, res: Response) => {
       status: role === "admin" ? "approved" : "pending",
       tags: dataToUpdate.tags,
       categories: dataToUpdate.categories,
+      authorId: role === "admin" ? authorId : userId,
+      updated_at: date.toISOString(),
     },
     include: {
       tags: true,

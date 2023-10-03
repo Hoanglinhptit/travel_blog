@@ -3,16 +3,32 @@ import { prisma } from "../../prisma/prisma";
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 // import validator from "validator";
-const createCategories: any = async (req: TokenRequest, res: Response) => {
+const createTags: any = async (req: TokenRequest, res: Response) => {
   const { name } = req.body;
-  const createdCategory = await prisma.category.create({
+  const createdCategory = await prisma.tags.create({
     data: {
       name: name,
     },
   });
   return res.status(200).json(createdCategory);
 };
-const getCategories: any = async (req: TokenRequest, res: Response) => {
+const updateTags: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+  const { name } = req.body as {
+    name: string;
+  };
+  // Determine the role of the requester (user or admin)
+
+  const updatedTags = await prisma.tags.update({
+    where: { id: Number(id) },
+    data: {
+      name: name,
+    },
+  });
+
+  return res.status(200).json(updatedTags);
+};
+const getTags: any = async (req: TokenRequest, res: Response) => {
   const { keySearch, limit, pageIndex } = req.query as {
     keySearch?: string;
     limit?: string;
@@ -26,8 +42,8 @@ const getCategories: any = async (req: TokenRequest, res: Response) => {
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
 
-  const [categories, totalCount] = await Promise.all([
-    prisma.category.findMany({
+  const [tags, totalCount] = await Promise.all([
+    prisma.tags.findMany({
       ...pagination,
       where: {
         name: {
@@ -44,7 +60,7 @@ const getCategories: any = async (req: TokenRequest, res: Response) => {
         },
       },
     }),
-    prisma.category.count({
+    prisma.tags.count({
       where: {
         name: {
           contains: search,
@@ -52,7 +68,7 @@ const getCategories: any = async (req: TokenRequest, res: Response) => {
       },
     }),
   ]);
-  const NumberOfPostsPerCat = categories.map((category) => {
+  const NumberOfPostsPerTag = tags.map((category) => {
     return {
       ...category,
       postCount: category.posts.length, // Add post count per category
@@ -61,14 +77,14 @@ const getCategories: any = async (req: TokenRequest, res: Response) => {
   const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
 
   return res.status(200).json({
-    NumberOfPostsPerCat,
+    NumberOfPostsPerTag,
     pageIndex: Number(pageIndex) || 1,
     totalPage,
     limit: Number(limit) || 10,
     keySearch,
   });
 };
-const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
+const getTagsPosts: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
   const { limit, pageIndex, keySearch } = req.query as {
     limit?: string;
@@ -86,8 +102,8 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
 
-  const [category, posts] = await Promise.all([
-    prisma.category.findUnique({
+  const [tags, posts] = await Promise.all([
+    prisma.tags.findUnique({
       where: {
         id: Number(id),
       },
@@ -117,25 +133,25 @@ const getCategoryPosts: any = async (req: TokenRequest, res: Response) => {
     }),
   ]);
 
-  if (!category) {
-    return res.status(404).json({ message: "Category not found." });
+  if (!tags) {
+    return res.status(404).json({ message: "Tag not found." });
   }
 
   return res.status(200).json({
-    category,
+    tags,
     posts,
     pageIndex: Number(pageIndex) || 1,
     limit: Number(limit) || 10,
     keySearch,
   });
 };
-const deleteCategory: any = async (req: TokenRequest, res: Response) => {
+const deleteTag: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
 
-  await prisma.category.delete({
+  await prisma.tags.delete({
     where: { id: Number(id) },
   });
 
   res.status(204).send();
 };
-export { getCategories, getCategoryPosts, createCategories, deleteCategory };
+export { getTags, getTagsPosts, createTags, deleteTag };
