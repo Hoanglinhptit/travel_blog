@@ -1,0 +1,44 @@
+config:
+  # This is a test server run by team Artillery
+  # It's designed to be highly scalable
+  target: http://localhost:3000
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 5
+      name: Warm up phase
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 10
+      name: Ramp up load
+    - duration: 30
+      arrivalRate: 10
+      rampTo: 30
+      name: Spike phase
+  # Load & configure a couple of useful plugins
+  # https://docs.art/reference/extensions
+  plugins:
+    ensure: {}
+    apdex: {}
+    metrics-by-endpoint: {}
+  apdex:
+    threshold: 500
+  ensure:
+    thresholds:
+      - http.response_time.p99: 10000
+      - http.response_time.p95: 10000
+scenarios:
+  - flow:
+      - loop:
+          - get:
+              url: "/api/posts?limit=100&pageIndex=1"
+          # - post:
+          #     url: "/api/posts"
+          #     headers:
+          #       Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlkIjoxLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2OTY1ODM3NTMsImV4cCI6MTY5NjY3MDE1M30.BxPi4BEllAiMMeeqg8bDzSHrkgkrpquJUT94vZj7e5w"
+          #     json:
+          #       title: "User block notification 6"
+          #       content: "## Welcome"
+          #       tagNames: []
+          #       categories: [1]
+        count: 60
