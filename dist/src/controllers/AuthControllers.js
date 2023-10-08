@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsers = exports.register = exports.login = void 0;
+exports.deleteUser = exports.updateUser = exports.getUsers = exports.register = exports.login = void 0;
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const validator_1 = __importDefault(require("validator"));
@@ -41,7 +42,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(401).json({ errors: [], message: "Invalid credentials" });
     }
     const access_token = jsonwebtoken_1.default.sign({ sub: user.id, id: user.id, role: user.role }, TOKEN_SECRET, {
-        expiresIn: "3h",
+        expiresIn: "24h",
     });
     return res.status(200).json({
         data: { access_token, name: user.name, role: user.role, id: user.id },
@@ -89,20 +90,71 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         take: Number(limit) || 10,
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
-    const listUser = yield prisma_1.prisma.users.findMany(Object.assign(Object.assign({}, pagination), { where: {
-            name: {
-                contains: search,
-            },
-            OR: [
-                {
-                    email: {
-                        endsWith: "@post.vn",
+    const [users, totalCount] = yield Promise.all([
+        prisma_1.prisma.users.findMany(Object.assign(Object.assign({}, pagination), { where: {
+                name: {
+                    contains: search,
+                },
+                OR: [
+                    {
+                        email: {
+                            endsWith: "@post.vn",
+                        },
+                    },
+                    { email: { endsWith: "@gmail.com" } },
+                ],
+            }, include: {
+                posts: {
+                    select: {
+                        title: true,
                     },
                 },
-                { email: { endsWith: "@gmail.com" } },
-            ],
-        } }));
-    return res.status(200).json(listUser);
+            } })),
+        prisma_1.prisma.users.count({
+            where: {
+                name: {
+                    contains: search,
+                },
+                OR: [
+                    {
+                        email: {
+                            endsWith: "@post.vn",
+                        },
+                    },
+                    { email: { endsWith: "@gmail.com" } },
+                ],
+            },
+        }),
+    ]);
+    const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+    return res.status(200).json({
+        users,
+        pageIndex: Number(pageIndex) || 1,
+        totalPage,
+        limit: Number(limit) || 10,
+        keySearch,
+    });
 });
 exports.getUsers = getUsers;
+const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { role } = req.body;
+    // Determine the role of the requester (user or admin)
+    const updatedUser = yield prisma_1.prisma.users.update({
+        where: { id: Number(id) },
+        data: {
+            role: role,
+        },
+    });
+    return res.status(200).json(updatedUser);
+});
+exports.updateUser = updateUser;
+const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    yield prisma_1.prisma.users.delete({
+        where: { id: Number(id) },
+    });
+    res.status(204).send();
+});
+exports.deleteUser = deleteUser;
 //# sourceMappingURL=AuthControllers.js.map

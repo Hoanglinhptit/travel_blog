@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCategories = exports.getCategoryPosts = exports.getCategories = void 0;
+exports.updateCategory = exports.deleteCategory = exports.createCategories = exports.getCategoryPosts = exports.getCategories = void 0;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const prisma_1 = require("../../prisma/prisma");
 // import validator from "validator";
@@ -23,6 +23,19 @@ const createCategories = (req, res) => __awaiter(void 0, void 0, void 0, functio
     return res.status(200).json(createdCategory);
 });
 exports.createCategories = createCategories;
+const updateCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { name } = req.body;
+    // Determine the role of the requester (user or admin)
+    const updatedTags = yield prisma_1.prisma.category.update({
+        where: { id: Number(id) },
+        data: {
+            name: name,
+        },
+    });
+    return res.status(200).json(updatedTags);
+});
+exports.updateCategory = updateCategory;
 const getCategories = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { keySearch, limit, pageIndex } = req.query;
     const search = keySearch || "";
@@ -115,4 +128,12 @@ const getCategoryPosts = (req, res) => __awaiter(void 0, void 0, void 0, functio
     });
 });
 exports.getCategoryPosts = getCategoryPosts;
+const deleteCategory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    yield prisma_1.prisma.category.delete({
+        where: { id: Number(id) },
+    });
+    res.status(204).send();
+});
+exports.deleteCategory = deleteCategory;
 //# sourceMappingURL=CategoriesControllers.js.map
