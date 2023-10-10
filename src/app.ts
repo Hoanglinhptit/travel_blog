@@ -21,15 +21,15 @@ AWS.config.update({
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
-const port = 3000;
+const port = 80;
 const server = http.createServer(app);
 routes(app);
 
-app.all("/*", () => {
-  throw new BadRouteError();
-});
+// app.all("/*", () => {
+//   throw new BadRouteError();
+// });
 
 app.use(errorHandeler);
 
