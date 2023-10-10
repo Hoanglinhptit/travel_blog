@@ -13,6 +13,7 @@
   "lint-staged": {
     "**/*.ts": "prettier --write --ignore-unknown"
   },
+  "type": "module",
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
