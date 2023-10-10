@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(cors());
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
-const port = 80;
+const port = 3000;
 const server = http.createServer(app);
 routes(app);
 
