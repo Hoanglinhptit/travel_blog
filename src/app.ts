@@ -9,6 +9,7 @@ import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { BadRouteError } from "./middlewares/BadRouteHandler";
 // import { DatabaseError } from "./middlewares/DatabaseError";
+
 if (!process.env.TOKEN_SECRET) {
   throw new Error("TOKEN_SECRET must be set in .env file");
 }
@@ -25,11 +26,6 @@ app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
 routes(app);
-
-// app.get("/", (req: Request, res: Response) => {
-
-//   res.send("Hello World!");
-// });
 
 app.all("/*", () => {
   throw new BadRouteError();

@@ -27,7 +27,6 @@ const uploadFile: any = async (req: fileRequest, res: Response) => {
     // Expires: 4000,
   };
   const data = await s3.upload(params).promise();
-  console.log("data", data);
 
   res.status(200).json({
     url: data.Location,

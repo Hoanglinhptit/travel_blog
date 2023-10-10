@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "../../prisma/prisma";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 // import validator from "validator";
@@ -63,15 +64,15 @@ const getTags: any = async (req: TokenRequest, res: Response) => {
     prisma.tags.count({
       where: {
         name: {
-          contains: search,
+          contains: keySearch,
         },
       },
     }),
   ]);
-  const NumberOfPostsPerTag = tags.map((category) => {
+  const NumberOfPostsPerTag = tags.map((tag) => {
     return {
-      ...category,
-      postCount: category.posts.length, // Add post count per category
+      ...tag,
+      postCount: tag.posts.length, // Add post count per category
     };
   });
   const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
@@ -154,4 +155,4 @@ const deleteTag: any = async (req: TokenRequest, res: Response) => {
 
   res.status(204).send();
 };
-export { getTags, getTagsPosts, createTags, deleteTag };
+export { getTags, getTagsPosts, createTags, deleteTag, updateTags };

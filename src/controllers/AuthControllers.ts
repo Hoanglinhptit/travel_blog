@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validator from "validator";
 import { Request, Response } from "express";
 import { prisma } from "../../prisma/prisma";
 import { ResponseBody } from "../types";
+import { TokenRequest } from "src/middlewares/Authentication";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET!;
 
@@ -86,7 +88,7 @@ const register = async (req: Request, res: Response) => {
 
   return res.status(200).json(newUser);
 };
-const getUsers = async (req: Request, res: Response) => {
+const getUsers: any = async (req: Request, res: Response) => {
   const { keySearch, limit, pageIndex } = req.query as {
     keySearch?: string;
     limit?: string;
@@ -98,24 +100,82 @@ const getUsers = async (req: Request, res: Response) => {
     take: Number(limit) || 10,
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
-
-  const listUser = await prisma.users.findMany({
-    ...pagination,
-    where: {
-      name: {
-        contains: search,
+  const [users, totalCount] = await Promise.all([
+    prisma.users.findMany({
+      ...pagination,
+      where: {
+        name: {
+          contains: search,
+        },
+        OR: [
+          {
+            email: {
+              endsWith: "@post.vn",
+            },
+          },
+          { email: { endsWith: "@gmail.com" } },
+        ],
       },
-      OR: [
-        {
-          email: {
-            endsWith: "@post.vn",
+      include: {
+        posts: {
+          select: {
+            title: true,
           },
         },
-        { email: { endsWith: "@gmail.com" } },
-      ],
+      },
+    }),
+    prisma.users.count({
+      where: {
+        name: {
+          contains: search,
+        },
+        OR: [
+          {
+            email: {
+              endsWith: "@post.vn",
+            },
+          },
+          { email: { endsWith: "@gmail.com" } },
+        ],
+      },
+    }),
+  ]);
+
+  const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+
+  return res.status(200).json({
+    users,
+    pageIndex: Number(pageIndex) || 1,
+    totalPage,
+    limit: Number(limit) || 10,
+    keySearch,
+  });
+};
+const updateUser: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+  const { role } = req.body as {
+    role: string;
+  };
+
+  // Determine the role of the requester (user or admin)
+
+  const updatedUser = await prisma.users.update({
+    where: { id: Number(id) },
+    data: {
+      role: role,
     },
   });
-  return res.status(200).json(listUser);
+
+  return res.status(200).json(updatedUser);
+};
+const deleteUser: any = async (req: TokenRequest, res: Response) => {
+  const { id } = req.params;
+
+  await prisma.users.delete({
+    where: { id: Number(id) },
+  });
+
+  res.status(204).send();
 };
 
-export { login, register, getUsers };
+export { login, register, getUsers, updateUser, deleteUser };

@@ -12,25 +12,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePost = exports.deletePost = exports.updatePostStatus = exports.getPendingPosts = exports.getPosts = exports.getPostByID = exports.createPostAdmin = exports.createPost = void 0;
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// import { ResponseBody } from "../types";
-const prisma_1 = require("../../prisma/prisma");
+exports.getPostsAdmin = exports.updatePost = exports.deletePost = exports.updatePostStatus = exports.getPendingPosts = exports.getPosts = exports.getPostByID = exports.createPostAdmin = exports.createPost = void 0;
 const validator_1 = __importDefault(require("validator"));
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+const date = new Date();
 //  user create post
 const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { title, content, tagNames, categories } = req.body;
     const authorId = req.user.id;
-    //   const tagNames = req.body.tagNames as Array<string>;
-    const createdPost = yield prisma_1.prisma.post.create({
+    const createdPost = yield prisma.post.create({
         data: {
             title,
             content,
             author: { connect: { id: authorId } },
             tags: {
-                connectOrCreate: tagNames.map((e) => ({
-                    where: { name: e },
-                    create: { name: e },
+                connectOrCreate: tagNames.map((tagName) => ({
+                    create: { name: tagName },
+                    where: { name: tagName },
                 })),
             },
             categories: {
@@ -51,15 +50,17 @@ const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 exports.createPost = createPost;
 /// just admin route can access
 const createPostAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { title, content, tagNames, categories } = req.body;
-    const createdPost = yield prisma_1.prisma.post.create({
+    const { title, content, tags, categories, authorID } = req.body;
+    const createdPost = yield prisma.post.create({
         data: {
             title,
             content,
-            author: { connect: { id: req.user.id } },
+            author: {
+                connect: { id: Number(authorID) ? Number(authorID) : req.user.id },
+            },
             status: "approved",
             tags: {
-                connectOrCreate: tagNames.map((e) => ({
+                connectOrCreate: tags.map((e) => ({
                     where: { name: e },
                     create: { name: e },
                 })),
@@ -80,7 +81,7 @@ exports.createPostAdmin = createPostAdmin;
 const updatePostStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { status } = req.body;
-    const updatedPost = yield prisma_1.prisma.post.update({
+    const updatedPost = yield prisma.post.update({
         where: { id: Number(id) },
         data: { status },
     });
@@ -101,7 +102,7 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             message: "Invalid credentials",
         });
     }
-    const post = yield prisma_1.prisma.post.findUnique({
+    const post = yield prisma.post.findUnique({
         where: { id: parseInt(id) },
         include: {
             author: {
@@ -116,8 +117,22 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             categories: true,
         },
     });
+    if (!post) {
+        return res.status(404).json({
+            message: "Post not found",
+        });
+    }
+    // Increment the view count
+    const updatedPost = yield prisma.post.update({
+        where: { id: parseInt(id) },
+        data: {
+            views: {
+                increment: 1,
+            },
+        },
+    });
     return res.status(200).json({
-        data: post,
+        data: updatedPost,
     });
 });
 exports.getPostByID = getPostByID;
@@ -152,7 +167,7 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
     const [posts, totalCount] = yield Promise.all([
-        prisma_1.prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
+        prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
                             contains: search,
@@ -175,7 +190,7 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 tags: true,
                 categories: true,
             } })),
-        prisma_1.prisma.post.count({
+        prisma.post.count({
             where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
@@ -231,7 +246,7 @@ const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
     const [posts, totalCount] = yield Promise.all([
-        prisma_1.prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
+        prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
                             contains: search,
@@ -254,7 +269,7 @@ const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function
                 tags: true,
                 categories: true,
             } })),
-        prisma_1.prisma.post.count({
+        prisma.post.count({
             where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
@@ -279,11 +294,92 @@ const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function
     });
 });
 exports.getPendingPosts = getPendingPosts;
+// Admin crud :
+const getPostsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { keySearch, limit, pageIndex, tagSearch, categorySearch } = req.query;
+    const search = keySearch || "";
+    const tagSearchArray = (tagSearch || []).filter(Boolean);
+    const categorySearchArray = (categorySearch || []).filter(Boolean);
+    const tagSearchQuery = tagSearchArray.length > 0
+        ? {
+            tags: {
+                some: {
+                    name: {
+                        in: tagSearchArray,
+                    },
+                },
+            },
+        }
+        : {};
+    const categorySearchQuery = categorySearchArray.length > 0
+        ? {
+            categories: {},
+        }
+        : {};
+    const pagination = {
+        take: Number(limit) || 10,
+        skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
+    };
+    const [posts, totalCount] = yield Promise.all([
+        prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
+                    {
+                        title: {
+                            contains: search,
+                        },
+                    },
+                    {
+                        content: {
+                            contains: search,
+                        },
+                    },
+                ] }, tagSearchQuery), categorySearchQuery), include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                        email: true,
+                    },
+                },
+                tags: {
+                    select: {
+                        name: true,
+                    },
+                },
+                categories: true,
+            } })),
+        prisma.post.count({
+            where: Object.assign(Object.assign({ OR: [
+                    {
+                        title: {
+                            contains: search,
+                        },
+                    },
+                    {
+                        content: {
+                            contains: search,
+                        },
+                    },
+                ] }, tagSearchQuery), categorySearchQuery),
+        }),
+    ]);
+    const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+    return res.status(200).json({
+        posts,
+        pageIndex: Number(pageIndex) || 1,
+        totalPage,
+        limit: Number(limit) || 10,
+        keySearch,
+        totalCount,
+    });
+});
+exports.getPostsAdmin = getPostsAdmin;
 const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const { title, content, tags, categories } = req.body;
+    const { title, content, tags, categories, authorId } = req.body;
     // Determine the role of the requester (user or admin)
     const { role } = req.user;
+    const userId = req.user.id;
     const dataToUpdate = {
         tags,
         categories,
@@ -306,7 +402,7 @@ const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             })),
         };
     }
-    const updatedPost = yield prisma_1.prisma.post.update({
+    const updatedPost = yield prisma.post.update({
         where: { id: Number(id) },
         data: {
             title: title,
@@ -314,6 +410,8 @@ const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             status: role === "admin" ? "approved" : "pending",
             tags: dataToUpdate.tags,
             categories: dataToUpdate.categories,
+            authorId: role === "admin" ? authorId : userId,
+            updated_at: date.toISOString(),
         },
         include: {
             tags: true,
@@ -326,7 +424,7 @@ exports.updatePost = updatePost;
 // admin and user can delete
 const deletePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    yield prisma_1.prisma.post.delete({
+    yield prisma.post.delete({
         where: { id: Number(id) },
     });
     res.status(204).send();

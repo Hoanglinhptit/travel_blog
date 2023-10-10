@@ -1,7 +1,13 @@
 import type { Express } from "express";
 import { authenticateToken } from "./middlewares/Authentication";
 import { isAdmin } from "./middlewares/Admin";
-import { login, register, getUsers } from "./controllers/AuthControllers";
+import {
+  login,
+  register,
+  getUsers,
+  deleteUser,
+  updateUser,
+} from "./controllers/AuthControllers";
 import {
   createPost,
   createPostAdmin,
@@ -17,11 +23,15 @@ import {
   getCategories,
   getCategoryPosts,
   createCategories,
+  deleteCategory,
+  updateCategory,
 } from "./controllers/CategoriesControllers";
 import {
   getTags,
   getTagsPosts,
   createTags,
+  deleteTag,
+  updateTags,
 } from "./controllers/TagControllers";
 
 import { uploadFile } from "./controllers/FilesControllers";
@@ -32,7 +42,12 @@ export default function routes(app: Express) {
 
   // Protected
   app.route("/admin/users").get(authenticateToken, isAdmin, getUsers);
+  // app.route("/admin/users").get(getUsers);
 
+  app
+    .route("/admin/users/:id")
+    .put(authenticateToken, isAdmin, updateUser)
+    .delete(authenticateToken, isAdmin, deleteUser);
   // Post route
   app
     .route("/api/posts")
@@ -55,7 +70,12 @@ export default function routes(app: Express) {
     .route("/api/categories")
     .get(getCategories)
     .post(authenticateToken, isAdmin, createCategories);
+
   app.route("/api/categories/:id/posts").get(getCategoryPosts);
+  app
+    .route("/api/categories/:id")
+    .put(authenticateToken, isAdmin, updateCategory)
+    .delete(authenticateToken, isAdmin, deleteCategory);
 
   // Tags API routes
   app
@@ -63,6 +83,10 @@ export default function routes(app: Express) {
     .get(getTags)
     .post(authenticateToken, isAdmin, createTags);
   app.route("/api/tags/:id/posts").get(getTagsPosts);
+  app
+    .route("/api/tags/:id")
+    .put(authenticateToken, isAdmin, updateTags)
+    .delete(authenticateToken, isAdmin, deleteTag);
 
   // file route
   app.route("/api/file/upload").post(authenticateToken, uploadFile);

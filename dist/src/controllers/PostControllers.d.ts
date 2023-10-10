@@ -4,15 +4,7 @@ declare const updatePostStatus: any;
 declare const getPostByID: any;
 declare const getPosts: any;
 declare const getPendingPosts: any;
+declare const getPostsAdmin: any;
 declare const updatePost: any;
 declare const deletePost: any;
-export {
-  createPost,
-  createPostAdmin,
-  getPostByID,
-  getPosts,
-  getPendingPosts,
-  updatePostStatus,
-  deletePost,
-  updatePost,
-};
+export { createPost, createPostAdmin, getPostByID, getPosts, getPendingPosts, updatePostStatus, deletePost, updatePost, getPostsAdmin, };

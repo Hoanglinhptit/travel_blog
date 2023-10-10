@@ -1,25 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { ResponseBody } from "../types";
-import { prisma } from "../../prisma/prisma";
+// import { prisma } from "../../prisma/prisma";
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 import validator from "validator";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 const date = new Date();
 
 //  user create post
 const createPost: any = async (req: TokenRequest, res: Response) => {
   const { title, content, tagNames, categories } = req.body;
   const authorId = req.user.id;
-  //   const tagNames = req.body.tagNames as Array<string>;
   const createdPost = await prisma.post.create({
     data: {
       title,
       content,
       author: { connect: { id: authorId } },
       tags: {
-        connectOrCreate: tagNames.map((e: string) => ({
-          where: { name: e },
-          create: { name: e },
+        connectOrCreate: tagNames.map((tagName: string) => ({
+          create: { name: tagName },
+          where: { name: tagName },
         })),
       },
       categories: {
@@ -42,7 +43,7 @@ const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
   const { title, content, tags, categories, authorID } = req.body as {
     title: string;
     content: string;
-    tags: string[];
+    tags: any;
     categories: any;
     authorID?: string;
   };
@@ -51,7 +52,9 @@ const createPostAdmin: any = async (req: TokenRequest, res: Response) => {
     data: {
       title,
       content,
-      author: { connect: { id: authorID ? Number(authorID) : req.user.id } },
+      author: {
+        connect: { id: Number(authorID) ? Number(authorID) : req.user.id },
+      },
       status: "approved",
       tags: {
         connectOrCreate: tags.map((e: string) => ({
