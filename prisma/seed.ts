@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const seedPosts = async () => {
   try {
-    for (let i = 1; i <= 1000; i++) {
+    for (let i = 1; i <= 100; i++) {
       const post = await prisma.post.create({
         data: {
           title: `Post - ${i}`,
@@ -91,7 +91,7 @@ const seedPosts = async () => {
   }
 };
 const seedUsers = async () => {
-  for (let index = 3; index < 5001; index++) {
+  for (let index = 1; index <= 100; index++) {
     const hashPassword = await bcrypt.hash("user", 10);
 
     const user = await prisma.users.create({
