@@ -24,7 +24,7 @@ app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
 routes(app);
-
+app.get("/", (req, res) => res.send("Hello Mai Meo"));
 app.use(errorHandeler);
 
 server.listen(port, () => {
