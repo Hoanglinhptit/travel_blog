@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const seedPosts = async () => {
   try {
-    for (let i = 3727; i <= 8000; i++) {
+    for (let i = 1; i <= 1000; i++) {
       const post = await prisma.post.create({
         data: {
           title: `Post - ${i}`,
@@ -128,9 +128,9 @@ const seedTags = async () => {
 const main = async () => {
   try {
     // await seedUsers();
-    // await seedPosts();
+    await seedPosts();
     // await seedCategory();
-    await seedTags();
+    // await seedTags();
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {
