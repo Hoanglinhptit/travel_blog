@@ -4,7 +4,7 @@
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 import validator from "validator";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 const prisma = new PrismaClient();
 const date = new Date();
 
@@ -146,7 +146,7 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
     };
 
   const search: string = keySearch || "";
-  const tagSearchQuery = tagSearch
+  const tagSearchQuery: Prisma.PostWhereInput = tagSearch
     ? {
         tags: {
           some: {
@@ -158,7 +158,7 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
       }
     : {};
 
-  const categorySearchQuery = categorySearch
+  const categorySearchQuery: Prisma.PostWhereInput = categorySearch
     ? {
         categories: {
           some: {
@@ -169,62 +169,49 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
         },
       }
     : {};
-  const pagination: object = {
+
+  const pagination: Prisma.PostFindManyArgs = {
     take: Number(limit) || 10,
     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
   };
 
-  const [posts, totalCount] = await Promise.all([
-    prisma.post.findMany({
-      ...pagination,
-      where: {
-        OR: [
-          {
-            title: {
-              contains: search,
-            },
-          },
-          {
-            content: {
-              contains: search,
-            },
-          },
-        ],
-        status: "approved",
-        ...tagSearchQuery,
-        ...categorySearchQuery,
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            role: true,
-            email: true,
+  const postsQuery: Prisma.PostFindManyArgs = {
+    ...pagination,
+    where: {
+      OR: [
+        {
+          title: {
+            contains: search,
           },
         },
-        tags: true,
-        categories: true,
+        {
+          content: {
+            contains: search,
+          },
+        },
+      ],
+      status: "approved",
+      ...tagSearchQuery,
+      ...categorySearchQuery,
+    },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          email: true,
+        },
       },
-    }),
+      tags: true,
+      categories: true,
+    },
+  };
+
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany(postsQuery),
     prisma.post.count({
-      where: {
-        OR: [
-          {
-            title: {
-              contains: search,
-            },
-          },
-          {
-            content: {
-              contains: search,
-            },
-          },
-        ],
-        status: "approved",
-        ...tagSearchQuery,
-        ...categorySearchQuery,
-      },
+      where: postsQuery.where,
     }),
   ]);
 
@@ -238,6 +225,109 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
     keySearch,
   });
 };
+// const getPosts: any = async (req: TokenRequest, res: Response) => {
+//   const { keySearch, limit, pageIndex, tagSearch, categorySearch } =
+//     req.query as {
+//       keySearch?: string;
+//       limit?: string;
+//       pageIndex?: string;
+//       tagSearch?: string;
+//       categorySearch?: string;
+//     };
+
+//   const search: string = keySearch || "";
+//   const tagSearchQuery = tagSearch
+//     ? {
+//         tags: {
+//           some: {
+//             name: {
+//               contains: tagSearch,
+//             },
+//           },
+//         },
+//       }
+//     : {};
+
+//   const categorySearchQuery = categorySearch
+//     ? {
+//         categories: {
+//           some: {
+//             name: {
+//               contains: categorySearch,
+//             },
+//           },
+//         },
+//       }
+//     : {};
+//   const pagination: object = {
+//     take: Number(limit) || 10,
+//     skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
+//   };
+
+//   const [posts, totalCount] = await Promise.all([
+//     prisma.post.findMany({
+//       ...pagination,
+//       where: {
+//         OR: [
+//           {
+//             title: {
+//               contains: search,
+//             },
+//           },
+//           {
+//             content: {
+//               contains: search,
+//             },
+//           },
+//         ],
+//         status: "approved",
+//         ...tagSearchQuery,
+//         ...categorySearchQuery,
+//       },
+//       include: {
+//         author: {
+//           select: {
+//             id: true,
+//             name: true,
+//             role: true,
+//             email: true,
+//           },
+//         },
+//         tags: true,
+//         categories: true,
+//       },
+//     }),
+//     prisma.post.count({
+//       where: {
+//         OR: [
+//           {
+//             title: {
+//               contains: search,
+//             },
+//           },
+//           {
+//             content: {
+//               contains: search,
+//             },
+//           },
+//         ],
+//         status: "approved",
+//         ...tagSearchQuery,
+//         ...categorySearchQuery,
+//       },
+//     }),
+//   ]);
+
+//   const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+
+//   return res.status(200).json({
+//     posts,
+//     pageIndex: Number(pageIndex) || 1,
+//     totalPage,
+//     limit: Number(limit) || 10,
+//     keySearch,
+//   });
+// };
 // api get list posts needed to approved and having pending status
 const getPendingPosts: any = async (req: TokenRequest, res: Response) => {
   const { keySearch, limit, pageIndex, tagSearch, categorySearch } =
