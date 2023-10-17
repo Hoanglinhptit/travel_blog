@@ -29,7 +29,7 @@ const connectRedis = async () => {
   await client
     .connect()
     .then(() => console.log("Server Redis connected on 192.168.70.134:6379"))
-    .catch((e) => console.error(e));
+    .catch((e: Error) => console.error(e));
 };
 connectRedis();
 
