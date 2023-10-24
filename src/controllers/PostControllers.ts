@@ -4,7 +4,8 @@
 import { TokenRequest } from "src/middlewares/Authentication";
 import { Response } from "express";
 import validator from "validator";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { client } from "../redis";
 const prisma = new PrismaClient();
 const date = new Date();
 
@@ -134,7 +135,7 @@ const getPostByID: any = async (req: TokenRequest, res: Response) => {
     data: updatedPost,
   });
 };
-/// those posts have been approved
+
 const getPosts: any = async (req: TokenRequest, res: Response) => {
   const { keySearch, limit, pageIndex, tagSearch, categorySearch } =
     req.query as {
@@ -144,7 +145,14 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
       tagSearch?: string;
       categorySearch?: string;
     };
+  const cacheKey = `posts:${JSON.stringify(req.query)}`;
+  const cachedData = await client.get(cacheKey);
 
+  if (cachedData) {
+    // If cached data exists, return it
+    const parsedData = JSON.parse(cachedData);
+    return res.status(200).json(parsedData);
+  }
   const search: string = keySearch || "";
   const tagSearchQuery = tagSearch
     ? {
@@ -229,7 +237,11 @@ const getPosts: any = async (req: TokenRequest, res: Response) => {
   ]);
 
   const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
-
+  await client.set(
+    cacheKey,
+    JSON.stringify({ posts, pageIndex, totalPage, limit, keySearch }),
+    { EX: 3600 },
+  ); // Cache for 1 hour (3600 seconds)
   return res.status(200).json({
     posts,
     pageIndex: Number(pageIndex) || 1,

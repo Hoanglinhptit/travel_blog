@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPostsAdmin = exports.updatePost = exports.deletePost = exports.updatePostStatus = exports.getPendingPosts = exports.getPosts = exports.getPostByID = exports.createPostAdmin = exports.createPost = void 0;
 const validator_1 = __importDefault(require("validator"));
 const client_1 = require("@prisma/client");
+const redis_1 = require("../redis");
 const prisma = new client_1.PrismaClient();
 const date = new Date();
 //  user create post
@@ -136,9 +137,15 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     });
 });
 exports.getPostByID = getPostByID;
-/// those posts have been approved
 const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { keySearch, limit, pageIndex, tagSearch, categorySearch } = req.query;
+    const cacheKey = `posts:${JSON.stringify(req.query)}`;
+    const cachedData = yield redis_1.client.get(cacheKey);
+    if (cachedData) {
+        // If cached data exists, return it
+        const parsedData = JSON.parse(cachedData);
+        return res.status(200).json(parsedData);
+    }
     const search = keySearch || "";
     const tagSearchQuery = tagSearch
         ? {
@@ -206,6 +213,7 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }),
     ]);
     const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
+    yield redis_1.client.set(cacheKey, JSON.stringify({ posts, pageIndex, totalPage, limit, keySearch }), { EX: 3600 }); // Cache for 1 hour (3600 seconds)
     return res.status(200).json({
         posts,
         pageIndex: Number(pageIndex) || 1,
