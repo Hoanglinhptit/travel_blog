@@ -22,6 +22,7 @@ const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const routes_1 = __importDefault(require("./routes"));
 const ErrorHandler_1 = require("./middlewares/ErrorHandler");
 const redis_1 = require("./redis");
+const Logger_1 = require("./middlewares/Logger");
 if (!process.env.TOKEN_SECRET) {
     throw new Error("TOKEN_SECRET must be set in .env file");
 }
@@ -52,6 +53,8 @@ process.on("SIGINT", () => {
         process.exit();
     });
 });
+app.use(Logger_1.asyncLoggerMiddleware);
+app.use(Logger_1.loggerMail);
 app.use(ErrorHandler_1.errorHandeler);
 // server runtime
 server.listen(port, () => {

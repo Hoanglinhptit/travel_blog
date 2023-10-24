@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import cors from "cors";
 import http from "http";
 import "dotenv/config";
@@ -8,6 +8,7 @@ import AWS from "aws-sdk";
 import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { client } from "./redis";
+import { asyncLoggerMiddleware, loggerMail } from "./middlewares/Logger";
 
 if (!process.env.TOKEN_SECRET) {
   throw new Error("TOKEN_SECRET must be set in .env file");
@@ -23,6 +24,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
+app.use(asyncLoggerMiddleware);
 routes(app);
 // redis runtime
 const connectRedis = async () => {
@@ -41,6 +43,7 @@ process.on("SIGINT", () => {
   });
 });
 
+// app.use(loggerMail)
 app.use(errorHandeler);
 // server runtime
 server.listen(port, () => {

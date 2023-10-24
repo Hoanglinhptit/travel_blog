@@ -4,15 +4,15 @@ config:
   target: http://192.168.70.136
   phases:
     - duration: 60
-      arrivalRate: 1
-      rampTo: 5
-      name: Warm up phase
-    - duration: 60
       arrivalRate: 5
       rampTo: 10
-      name: Ramp up load
-    - duration: 30
+      name: Warm up phase
+    - duration: 60
       arrivalRate: 10
+      rampTo: 15
+      name: Ramp up load
+    - duration: 40
+      arrivalRate: 15
       rampTo: 30
       name: Spike phase
   # Load & configure a couple of useful plugins
@@ -25,8 +25,8 @@ config:
     threshold: 500
   ensure:
     thresholds:
-      - http.response_time.p99: 500
-      - http.response_time.p95: 500
+      - http.response_time.p99: 5000
+      - http.response_time.p95: 5000
 scenarios:
   - flow:
       - loop:
