@@ -9,7 +9,7 @@ import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { client } from "./redis";
 import { asyncLoggerMiddleware, loggerMail } from "./middlewares/Logger";
-import compression from "compression";
+// import compression from "compression";
 
 if (!process.env.TOKEN_SECRET) {
   throw new Error("TOKEN_SECRET must be set in .env file");
@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
-app.use(compression());
+// app.use(compression());
 app.use(asyncLoggerMiddleware);
 routes(app);
 // redis runtime

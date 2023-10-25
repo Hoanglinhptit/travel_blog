@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,10 +10,10 @@ const redis_1 = require("../redis");
 const prisma = new client_1.PrismaClient();
 const date = new Date();
 //  user create post
-const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createPost = async (req, res) => {
     const { title, content, tagNames, categories } = req.body;
     const authorId = req.user.id;
-    const createdPost = yield prisma.post.create({
+    const createdPost = await prisma.post.create({
         data: {
             title,
             content,
@@ -47,12 +38,12 @@ const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     return res.status(200).json({
         data: createdPost,
     });
-});
+};
 exports.createPost = createPost;
 /// just admin route can access
-const createPostAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createPostAdmin = async (req, res) => {
     const { title, content, tags, categories, authorID } = req.body;
-    const createdPost = yield prisma.post.create({
+    const createdPost = await prisma.post.create({
         data: {
             title,
             content,
@@ -76,20 +67,20 @@ const createPostAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function
     return res.status(200).json({
         data: createdPost,
     });
-});
+};
 exports.createPostAdmin = createPostAdmin;
 // update status of post - admin
-const updatePostStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updatePostStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
-    const updatedPost = yield prisma.post.update({
+    const updatedPost = await prisma.post.update({
         where: { id: Number(id) },
         data: { status },
     });
     return res.status(200).json({ data: updatedPost });
-});
+};
 exports.updatePostStatus = updatePostStatus;
-const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPostByID = async (req, res) => {
     const { id } = req.params;
     const idCheck = validator_1.default.isInt(id);
     if (!idCheck) {
@@ -103,7 +94,7 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             message: "Invalid credentials",
         });
     }
-    const post = yield prisma.post.findUnique({
+    const post = await prisma.post.findUnique({
         where: { id: parseInt(id) },
         include: {
             author: {
@@ -124,7 +115,7 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     // Increment the view count
-    const updatedPost = yield prisma.post.update({
+    const updatedPost = await prisma.post.update({
         where: { id: parseInt(id) },
         data: {
             views: {
@@ -135,12 +126,12 @@ const getPostByID = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     return res.status(200).json({
         data: updatedPost,
     });
-});
+};
 exports.getPostByID = getPostByID;
-const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPosts = async (req, res) => {
     const { keySearch, limit, pageIndex, tagSearch, categorySearch } = req.query;
     const cacheKey = `posts:${JSON.stringify(req.query)}`;
-    const cachedData = yield redis_1.client.get(cacheKey);
+    const cachedData = await redis_1.client.get(cacheKey);
     if (cachedData) {
         // If cached data exists, return it
         const parsedData = JSON.parse(cachedData);
@@ -173,7 +164,7 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         take: Number(limit) || 10,
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
-    const [posts, totalCount] = yield Promise.all([
+    const [posts, totalCount] = await Promise.all([
         prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
@@ -213,7 +204,7 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }),
     ]);
     const totalPage = Math.ceil(totalCount / (Number(limit) || 10));
-    yield redis_1.client.set(cacheKey, JSON.stringify({ posts, pageIndex, totalPage, limit, keySearch }), { EX: 3600 }); // Cache for 1 hour (3600 seconds)
+    await redis_1.client.set(cacheKey, JSON.stringify({ posts, pageIndex, totalPage, limit, keySearch }), { EX: 3600 }); // Cache for 1 hour (3600 seconds)
     return res.status(200).json({
         posts,
         pageIndex: Number(pageIndex) || 1,
@@ -221,10 +212,10 @@ const getPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         limit: Number(limit) || 10,
         keySearch,
     });
-});
+};
 exports.getPosts = getPosts;
 // api get list posts needed to approved and having pending status
-const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPendingPosts = async (req, res) => {
     const { keySearch, limit, pageIndex, tagSearch, categorySearch } = req.query;
     const search = keySearch || "";
     const tagSearchQuery = tagSearch
@@ -253,7 +244,7 @@ const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function
         take: Number(limit) || 10,
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
-    const [posts, totalCount] = yield Promise.all([
+    const [posts, totalCount] = await Promise.all([
         prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
@@ -300,10 +291,10 @@ const getPendingPosts = (req, res) => __awaiter(void 0, void 0, void 0, function
         limit: Number(limit) || 10,
         keySearch,
     });
-});
+};
 exports.getPendingPosts = getPendingPosts;
 // Admin crud :
-const getPostsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getPostsAdmin = async (req, res) => {
     const { keySearch, limit, pageIndex, tagSearch, categorySearch } = req.query;
     const search = keySearch || "";
     const tagSearchArray = (tagSearch || []).filter(Boolean);
@@ -328,7 +319,7 @@ const getPostsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         take: Number(limit) || 10,
         skip: ((Number(pageIndex) || 1) - 1) * (Number(limit) || 10),
     };
-    const [posts, totalCount] = yield Promise.all([
+    const [posts, totalCount] = await Promise.all([
         prisma.post.findMany(Object.assign(Object.assign({}, pagination), { where: Object.assign(Object.assign({ OR: [
                     {
                         title: {
@@ -380,9 +371,9 @@ const getPostsAdmin = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         keySearch,
         totalCount,
     });
-});
+};
 exports.getPostsAdmin = getPostsAdmin;
-const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updatePost = async (req, res) => {
     const { id } = req.params;
     const { title, content, tags, categories, authorId } = req.body;
     // Determine the role of the requester (user or admin)
@@ -410,7 +401,7 @@ const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             })),
         };
     }
-    const updatedPost = yield prisma.post.update({
+    const updatedPost = await prisma.post.update({
         where: { id: Number(id) },
         data: {
             title: title,
@@ -427,15 +418,15 @@ const updatePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         },
     });
     return res.status(200).json(updatedPost);
-});
+};
 exports.updatePost = updatePost;
 // admin and user can delete
-const deletePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const deletePost = async (req, res) => {
     const { id } = req.params;
-    yield prisma.post.delete({
+    await prisma.post.delete({
         where: { id: Number(id) },
     });
     res.status(204).send();
-});
+};
 exports.deletePost = deletePost;
 //# sourceMappingURL=PostControllers.js.map
