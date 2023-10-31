@@ -89,7 +89,6 @@ const asyncLoggerMiddleware = async (
   try {
     stats.requestCount++;
 
-    // Log the request information asynchronously
     setImmediate(() => {
       logger.info({
         method: req.method,
@@ -127,49 +126,49 @@ const asyncLoggerMiddleware = async (
   }
 };
 // increateing func
-const loggerMail: any = async (error: Error, next: NextFunction) => {
-  // Log errors
-  logger.error(error.message);
+// const loggerMail: any = async (error: Error, next: NextFunction) => {
+//   // Log errors
+//   logger.error(error.message);
 
-  // Send an email notification for the error
-  await createTransporter()
-    .then((transporter) =>
-      transporter.sendMail({
-        from: "linhlh2612@gmail.com",
-        to: "lehoanglinhptit@gmail.com",
-        subject: "Error Notification",
-        text: `An error occurred in your Express application: ${error.message}`,
-      }),
-    )
-    .catch((error) => console.error(error));
+//   // Send an email notification for the error
+//   await createTransporter()
+//     .then((transporter) =>
+//       transporter.sendMail({
+//         from: "linhlh2612@gmail.com",
+//         to: "lehoanglinhptit@gmail.com",
+//         subject: "Error Notification",
+//         text: `An error occurred in your Express application: ${error.message}`,
+//       }),
+//     )
+//     .catch((error) => console.error(error));
 
-  next();
-};
+//   next();
+// };
 
-// Function to send email with request and error summary
-const sendSummaryEmail = async () => {
-  const { requestCount, errorMessages } = stats;
-  const subject = "Request and Error Summary";
-  const text = `Total Requests: ${requestCount}\nErrors:\n${errorMessages.join(
-    "\n",
-  )}`;
+// // Function to send email with request and error summary
+// const sendSummaryEmail = async () => {
+//   const { requestCount, errorMessages } = stats;
+//   const subject = "Request and Error Summary";
+//   const text = `Total Requests: ${requestCount}\nErrors:\n${errorMessages.join(
+//     "\n",
+//   )}`;
 
-  await createTransporter()
-    .then((transporter) =>
-      transporter.sendMail({
-        from: "linhlh2612@gmail.com",
-        to: "lehoanglinhptit@gmail.com",
-        subject,
-        text,
-      }),
-    )
-    .catch((err) => console.error(err));
+//   await createTransporter()
+//     .then((transporter) =>
+//       transporter.sendMail({
+//         from: "linhlh2612@gmail.com",
+//         to: "lehoanglinhptit@gmail.com",
+//         subject,
+//         text,
+//       }),
+//     )
+//     .catch((err) => console.error(err));
 
-  // Reset the counts and error messages after sending the email
-  stats.requestCount = 0;
-  stats.errorMessages = [];
-};
+//   // Reset the counts and error messages after sending the email
+//   stats.requestCount = 0;
+//   stats.errorMessages = [];
+// };
 // Send summary emails every 10 minutes
 // setInterval(sendSummaryEmail, 360000);
 
-export { asyncLoggerMiddleware, loggerMail };
+export { asyncLoggerMiddleware };

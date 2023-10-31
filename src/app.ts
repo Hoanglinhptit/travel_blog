@@ -25,7 +25,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
-// app.use(compression());
 app.use(asyncLoggerMiddleware);
 routes(app);
 // redis runtime
@@ -45,7 +44,6 @@ process.on("SIGINT", () => {
   });
 });
 
-// app.use(loggerMail)
 app.use(errorHandeler);
 // server runtime
 server.listen(port, () => {
