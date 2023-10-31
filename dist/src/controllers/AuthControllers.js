@@ -32,7 +32,13 @@ const login = async (req, res) => {
     if (!passwordMatch) {
         return res.status(401).json({ errors: [], message: "Invalid credentials" });
     }
-    const access_token = jsonwebtoken_1.default.sign({ sub: user.id, id: user.id, role: user.role }, TOKEN_SECRET, {
+    const access_token = jsonwebtoken_1.default.sign({
+        sub: user.id,
+        id: user.id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+    }, TOKEN_SECRET, {
         expiresIn: "24h",
     });
     return res.status(200).json({

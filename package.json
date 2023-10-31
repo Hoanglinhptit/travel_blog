@@ -8,7 +8,8 @@
     "start": "ts-node-dev src/app.ts",
     "prepare": "husky install",
     "build": "tsc",
-    "start:prod": "tsc && node dist/src/app.js"
+    "start:prod": "tsc && node dist/src/app.js",
+    "build:prod":"node dist/src/app.js"
   },
   "lint-staged": {
     "**/*.ts": "prettier --write --ignore-unknown"
