@@ -170,6 +170,6 @@ const sendSummaryEmail = async () => {
   stats.errorMessages = [];
 };
 // Send summary emails every 10 minutes
-setInterval(sendSummaryEmail, 360000);
+// setInterval(sendSummaryEmail, 360000);
 
 export { asyncLoggerMiddleware, loggerMail };
