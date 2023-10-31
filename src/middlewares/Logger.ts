@@ -19,10 +19,6 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
-const ACCESS_TOKEN = async () => {
-  return await oAuth2Client.getAccessToken();
-};
-
 // config logger
 const logger = winston.createLogger({
   level: "info",
@@ -50,7 +46,7 @@ const logger = winston.createLogger({
 //   },
 // } as nodemailer.TransportOptions);
 async function createTransporter() {
-  const accessToken = await ACCESS_TOKEN();
+  const accessToken = await oAuth2Client.getAccessToken();
 
   // Configure the Nodemailer transporter with the obtained access token
   const transporter = nodemailer.createTransport({
