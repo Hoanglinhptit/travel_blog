@@ -18,6 +18,7 @@ const oAuth2Client = new google.auth.OAuth2(
   REDIRECT_URI,
 );
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+
 const ACCESS_TOKEN = async () => {
   return await oAuth2Client.getAccessToken();
 };
@@ -34,20 +35,41 @@ const logger = winston.createLogger({
 });
 // Create a Nodemailer transporter for sending email notifications
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: MY_EMAIL,
-    clientId: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    refreshToken: REFRESH_TOKEN,
-    accessToken: ACCESS_TOKEN(),
-  },
-  tls: {
-    rejectUnauthorized: true,
-  },
-} as nodemailer.TransportOptions);
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     type: "OAuth2",
+//     user: MY_EMAIL,
+//     clientId: CLIENT_ID,
+//     clientSecret: CLIENT_SECRET,
+//     refreshToken: REFRESH_TOKEN,
+//     accessToken: ACCESS_TOKEN(),
+//   },
+//   tls: {
+//     rejectUnauthorized: true,
+//   },
+// } as nodemailer.TransportOptions);
+async function createTransporter() {
+  const accessToken = await ACCESS_TOKEN();
+
+  // Configure the Nodemailer transporter with the obtained access token
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: MY_EMAIL,
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
+      refreshToken: REFRESH_TOKEN,
+      accessToken: accessToken,
+    },
+    tls: {
+      rejectUnauthorized: true,
+    },
+  } as nodemailer.TransportOptions);
+
+  return transporter;
+}
 
 // Define an object to keep track of request and error counts
 const stats: {
@@ -59,7 +81,7 @@ const stats: {
 };
 
 // Define an async logging middleware
-const asyncLoggerMiddleware = (
+const asyncLoggerMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -89,30 +111,38 @@ const asyncLoggerMiddleware = (
     stats.errorMessages.push(error.message);
 
     // Send an email notification for the error (if desired)
-    transporter.sendMail({
-      from: "linhlh2612@gmail.com",
-      to: "lehoanglinhptit@gmail.com",
-      subject: "Error Notification",
-      text: `An error occurred in your Express application: ${error.message}`,
-    });
+    await createTransporter()
+      .then((transporter) =>
+        transporter.sendMail({
+          from: "linhlh2612@gmail.com",
+          to: "lehoanglinhptit@gmail.com",
+          subject: "Error Notification",
+          text: `An error occurred in your Express application: ${error.message}`,
+        }),
+      )
+      .catch((err) => console.error(err));
 
     // Pass the error to the error handling middleware
     next();
   }
 };
 // increateing func
-const loggerMail: any = async (err: Error, next: NextFunction) => {
+const loggerMail: any = async (error: Error, next: NextFunction) => {
   // Log errors
-  logger.error(err.message);
+  logger.error(error.message);
 
   // Send an email notification for the error
-  await // Send an email notification for the error
-  transporter.sendMail({
-    from: "linhlh2612@gmail.com",
-    to: "lehoanglinhptit@gmail.com",
-    subject: "Error Notification",
-    text: `An error occurred in your Express application: ${err.message}`,
-  });
+  await createTransporter()
+    .then((transporter) =>
+      transporter.sendMail({
+        from: "linhlh2612@gmail.com",
+        to: "lehoanglinhptit@gmail.com",
+        subject: "Error Notification",
+        text: `An error occurred in your Express application: ${error.message}`,
+      }),
+    )
+    .catch((error) => console.error(error));
+
   next();
 };
 
@@ -124,12 +154,16 @@ const sendSummaryEmail = async () => {
     "\n",
   )}`;
 
-  await transporter.sendMail({
-    from: "linhlh2612@gmail.com",
-    to: "lehoanglinhptit@gmail.com",
-    subject,
-    text,
-  });
+  await createTransporter()
+    .then((transporter) =>
+      transporter.sendMail({
+        from: "linhlh2612@gmail.com",
+        to: "lehoanglinhptit@gmail.com",
+        subject,
+        text,
+      }),
+    )
+    .catch((err) => console.error(err));
 
   // Reset the counts and error messages after sending the email
   stats.requestCount = 0;
@@ -138,4 +172,4 @@ const sendSummaryEmail = async () => {
 // Send summary emails every 10 minutes
 setInterval(sendSummaryEmail, 360000);
 
-export { transporter, logger, asyncLoggerMiddleware, loggerMail };
+export { asyncLoggerMiddleware, loggerMail };

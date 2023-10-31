@@ -1,4 +1,4 @@
-import express, { NextFunction } from "express";
+import express from "express";
 import cors from "cors";
 import http from "http";
 import "dotenv/config";
@@ -8,7 +8,7 @@ import AWS from "aws-sdk";
 import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { client } from "./redis";
-import { asyncLoggerMiddleware, loggerMail } from "./middlewares/Logger";
+import { asyncLoggerMiddleware } from "./middlewares/Logger";
 // import compression from "compression";
 
 if (!process.env.TOKEN_SECRET) {
