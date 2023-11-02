@@ -8,7 +8,8 @@ import AWS from "aws-sdk";
 import routes from "./routes";
 import { errorHandeler } from "./middlewares/ErrorHandler";
 import { client } from "./redis";
-import { asyncLoggerMiddleware } from "./middlewares/Logger";
+import pino from "pino-http";
+// import { asyncLoggerMiddleware } from "./middlewares/WinstonLogger";
 // import compression from "compression";
 
 if (!process.env.TOKEN_SECRET) {
@@ -25,7 +26,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http.createServer(app);
-app.use(asyncLoggerMiddleware);
+app.use(pino({ level: "info", messageKey: ["HTTP"] }));
+// app.use(asyncLoggerMiddleware);
 routes(app);
 // redis runtime
 const connectRedis = async () => {

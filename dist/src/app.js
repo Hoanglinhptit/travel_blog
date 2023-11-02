@@ -13,7 +13,8 @@ const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const routes_1 = __importDefault(require("./routes"));
 const ErrorHandler_1 = require("./middlewares/ErrorHandler");
 const redis_1 = require("./redis");
-const Logger_1 = require("./middlewares/Logger");
+const pino_http_1 = __importDefault(require("pino-http"));
+// import { asyncLoggerMiddleware } from "./middlewares/WinstonLogger";
 // import compression from "compression";
 if (!process.env.TOKEN_SECRET) {
     throw new Error("TOKEN_SECRET must be set in .env file");
@@ -29,8 +30,8 @@ app.use(body_parser_1.default.urlencoded({ extended: false }));
 app.use((0, express_fileupload_1.default)({ useTempFiles: true, tempFileDir: "/tpm/" }));
 const port = 3000;
 const server = http_1.default.createServer(app);
-// app.use(compression());
-app.use(Logger_1.asyncLoggerMiddleware);
+app.use((0, pino_http_1.default)({ level: "info", messageKey: ["HTTP"] }));
+// app.use(asyncLoggerMiddleware);
 (0, routes_1.default)(app);
 // redis runtime
 const connectRedis = async () => {
@@ -47,7 +48,6 @@ process.on("SIGINT", () => {
         process.exit();
     });
 });
-// app.use(loggerMail)
 app.use(ErrorHandler_1.errorHandeler);
 // server runtime
 server.listen(port, () => {
