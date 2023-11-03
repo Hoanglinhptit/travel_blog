@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPostsAdmin = exports.updatePost = exports.deletePost = exports.updatePostStatus = exports.getPendingPosts = exports.getPosts = exports.getPostByID = exports.createPostAdmin = exports.createPost = void 0;
+exports.getTopViewedPosts = exports.getPostsAdmin = exports.updatePost = exports.deletePost = exports.updatePostStatus = exports.getPendingPosts = exports.getPosts = exports.getPostByID = exports.createPostAdmin = exports.createPost = void 0;
 const validator_1 = __importDefault(require("validator"));
 const client_1 = require("@prisma/client");
 const redis_1 = require("../redis");
@@ -429,4 +429,38 @@ const deletePost = async (req, res) => {
     res.status(204).send();
 };
 exports.deletePost = deletePost;
+const getTopViewedPosts = async (req, res) => {
+    const { limit } = req.query;
+    const cacheKey = `topViewedPosts:${limit}`;
+    const cachedData = await redis_1.client.get(cacheKey);
+    if (cachedData) {
+        // If cached data exists, return it
+        const parsedData = JSON.parse(cachedData);
+        return res.status(200).json(parsedData);
+    }
+    const topViewedPosts = await prisma.post.findMany({
+        take: Number(limit) || 10,
+        where: {
+            status: "approved",
+        },
+        orderBy: {
+            views: "desc",
+        },
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    name: true,
+                    role: true,
+                    email: true,
+                },
+            },
+            tags: true,
+            categories: true,
+        },
+    });
+    await redis_1.client.set(cacheKey, JSON.stringify(topViewedPosts), { EX: 3600 });
+    return res.status(200).json(topViewedPosts);
+};
+exports.getTopViewedPosts = getTopViewedPosts;
 //# sourceMappingURL=PostControllers.js.map
