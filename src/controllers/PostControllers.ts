@@ -530,6 +530,47 @@ const deletePost: any = async (req: TokenRequest, res: Response) => {
 
   res.status(204).send();
 };
+const getTopViewedPosts: any = async (req: TokenRequest, res: Response) => {
+  const { limit } = req.query as {
+    limit?: string;
+  };
+
+  const cacheKey = `topViewedPosts:${limit}`;
+  const cachedData = await client.get(cacheKey);
+
+  if (cachedData) {
+    // If cached data exists, return it
+    const parsedData = JSON.parse(cachedData);
+    return res.status(200).json(parsedData);
+  }
+
+  const topViewedPosts = await prisma.post.findMany({
+    take: Number(limit) || 10, // You can specify the number of top posts to retrieve
+    where: {
+      status: "approved",
+    },
+    orderBy: {
+      views: "desc",
+    },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          email: true,
+        },
+      },
+      tags: true,
+      categories: true,
+    },
+  });
+
+  await client.set(cacheKey, JSON.stringify(topViewedPosts), { EX: 3600 });
+
+  return res.status(200).json(topViewedPosts);
+};
+
 export {
   createPost,
   createPostAdmin,
@@ -540,4 +581,5 @@ export {
   deletePost,
   updatePost,
   getPostsAdmin,
+  getTopViewedPosts,
 };

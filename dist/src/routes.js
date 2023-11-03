@@ -19,6 +19,8 @@ function routes(app) {
         .put(Authentication_1.authenticateToken, Admin_1.isAdmin, AuthControllers_1.updateUser)
         .delete(Authentication_1.authenticateToken, Admin_1.isAdmin, AuthControllers_1.deleteUser);
     // Post route
+    // app.route("/api/home/post")
+    //   .get(getTopViewedPosts)
     app
         .route("/api/posts")
         .get(PostControllers_1.getPosts) // get list post include clone user

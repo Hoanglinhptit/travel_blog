@@ -29,9 +29,10 @@ const errorHandeler = (
   if (err instanceof CustomError) {
     return res.status(err.statusCode).send({ errors: err.formatErrors() });
   }
-  return res
-    .status(400)
-    .send({ errors: [{ message: "Something went wrong" }] });
+  console.error("Something went wrong. Exiting in 10 seconds...");
+  setTimeout(() => {
+    process.exit(1);
+  }, 10000);
 };
 
 export { ErrorMiddleware, errorHandeler, CustomError };

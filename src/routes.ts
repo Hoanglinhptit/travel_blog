@@ -18,6 +18,7 @@ import {
   updatePost,
   deletePost,
   getPostsAdmin,
+  getTopViewedPosts,
 } from "./controllers/PostControllers";
 import {
   getCategories,
@@ -49,6 +50,8 @@ export default function routes(app: Express) {
     .put(authenticateToken, isAdmin, updateUser)
     .delete(authenticateToken, isAdmin, deleteUser);
   // Post route
+  // app.route("/api/home/post")
+  //   .get(getTopViewedPosts)
   app
     .route("/api/posts")
     .get(getPosts) // get list post include clone user
