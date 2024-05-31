@@ -6,12 +6,21 @@ import { Response } from "express";
 // import validator from "validator";
 const createTags: any = async (req: TokenRequest, res: Response) => {
   const { name } = req.body;
-  const createdCategory = await prisma.tags.create({
+  const existingTag = await prisma.tags.findUnique({
+    where: { name: name },
+  });
+
+  if (existingTag) {
+    // If a tag with the same name exists, return a response indicating the conflict.
+    return res.status(409).json({ error: "Tag with this name already exists" });
+  }
+
+  const createdTags = await prisma.tags.create({
     data: {
       name: name,
     },
   });
-  return res.status(200).json(createdCategory);
+  return res.status(200).json(createdTags);
 };
 const updateTags: any = async (req: TokenRequest, res: Response) => {
   const { id } = req.params;
